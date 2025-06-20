@@ -1,0 +1,185 @@
+/* 基础样式 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.project-controls {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 8px 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #2980b9;
+}
+
+input, select, textarea {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* 横向板块样式 */
+.board-container {
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* 幕行样式 */
+.act-row {
+    display: flex;
+    flex-direction: column;
+    background: #ecf0f1;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.act-header {
+    padding: 15px;
+    background: #34495e;
+    color: white;
+    border-radius: 5px 5px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 节拍槽样式 */
+.beat-slots {
+    display: flex;
+    padding: 10px;
+    overflow-x: auto;
+    min-height: 200px;
+}
+
+.beat-slot {
+    min-width: 250px;
+    margin: 0 10px;
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 过渡区域样式 */
+.flexible-area {
+    min-width: 150px;
+    background: #f3f8fa;
+}
+
+.flexible-area h3 {
+    background: #95a5a6;
+    color: white;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.beat-slot h3 {
+    padding: 10px;
+    background: #95a5a6;
+    color: white;
+    text-align: center;
+    font-size: 14px;
+    border-radius: 5px 5px 0 0;
+}
+
+.card-list {
+    padding: 10px;
+    min-height: 120px;
+    max-height: 300px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.add-card-btn {
+    width: 100%;
+    padding: 5px;
+    margin-top: auto;
+    background: #7f8c8d;
+    color: white;
+    border: none;
+    border-radius: 0 0 5px 5px;
+    cursor: pointer;
+}
+
+/* 卡片样式 */
+.card {
+    background: white;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: move; /* 表示可拖动 */
+    position: relative;
+    user-select: none; /* 防止拖动时选中文本 */
+}
+
+.card:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.card-location {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.card-description {
+    font-size: 14px;
+    color: #555;
+}
+
+.card-type-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+}
+
+/* 卡片类型颜色 */
+.card[data-type="single-beat"] .card-type-indicator { background-color: #e74c3c; }
+.card[data-type="setup"] .card-type-indicator { background-color: #3498db; }
+.card[data-type="fun-games"] .card-type-indicator { background-color: #2ecc71; }
+.card[data-type="villain"] .card-type-indicator { background-color: #f1c40f; }
+.card[data-type="dark-night"] .card-type-indicator { background-color: #9b59b6; }
+.card[data-type="finale"] .card-type-indicator { background-color: #e67e22; }
+
+/* 拖动时的样式 */
