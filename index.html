@@ -10,7 +10,7 @@
 </head>
 <body>
     <header>
-        <h1>老袁编剧卡片系统（封闭内测版）<span class="version-info">v0.8.0</span></h1>
+        <h1>老袁编剧卡片系统（封闭内测版）<span class="version-info">v0.8.1</span></h1>
         <div class="project-controls">
             <select id="script-type" class="script-type-selector">
                 <option value="movie">电影</option>
@@ -19,12 +19,12 @@
             </select>
             <input type="text" id="project-title" placeholder="剧本名称">
             <div class="header-buttons">
-                <button id="save-project">保存项目</button>
-                <button id="load-project">加载项目</button>
-                <button id="import-project">导入项目</button>
-                <button id="show-stats">显示统计</button>
-                <button id="export-outline">导出大纲</button>
-                <button id="feedback-btn" class="feedback-btn">反馈</button>
+                <button id="save-project" data-tooltip="将项目以JSON文件保存，用于备份、分享">保存项目</button>
+                <button id="load-project" data-tooltip="读取浏览器缓存的自动保存版本">加载项目</button>
+                <button id="import-project" data-tooltip="打开本地存储的JSON文件">导入项目</button>
+                <button id="show-stats" data-tooltip="展示剧本的统计数据和分析">显示统计</button>
+                <button id="export-outline" data-tooltip="导出为可读的文本大纲格式">导出大纲</button>
+                <button id="feedback-btn" class="feedback-btn" data-tooltip="提交问题报告或功能建议">反馈</button>
             </div>
         </div>
     </header>
@@ -46,6 +46,24 @@
     <!-- 悬浮添加按钮 -->
     <div class="floating-add-button" id="quick-add-btn">+</div>
     
+    <!-- 新增: 悬浮功能菜单 -->
+    <div class="floating-menu">
+    <div class="floating-menu-item" id="trash-bin-btn">
+        <i class="menu-icon">🗑️</i>
+        <span class="menu-text">垃圾桶</span>
+    </div>
+    <div class="floating-menu-item" id="inspiration-btn">
+        <i class="menu-icon">💡</i>
+        <span class="menu-text">灵感箱</span></div>
+    </div>
+
+<!-- 新增: 拖拽删除用的垃圾桶 -->
+<div id="drag-trash-bin" class="drag-trash-bin hidden">
+    <div class="trash-icon">🗑️</div>
+    <div class="trash-text">拖拽至此删除</div>
+</div>
+
+
     <!-- 快速添加卡片菜单 -->
     <div class="quick-add-menu" id="quick-add-menu">
         <div class="quick-add-header">
@@ -196,6 +214,29 @@
             </form>
         </div>
     </div>
+
+<!-- 项目加载模态框 -->
+<div id="load-project-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>加载项目</h2>
+        <div class="project-list-container">
+            <div class="project-list-header">
+                <div class="project-name-header">项目名称</div>
+                <div class="project-date-header">最后保存时间</div>
+                <div class="project-actions-header">操作</div>
+            </div>
+            <div id="project-list" class="project-list">
+                <!-- 项目列表将在这里动态生成 -->
+                <div class="no-projects">没有找到已保存的项目</div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="button" id="refresh-project-list">刷新列表</button>
+            <button type="button" class="close-modal-btn">取消</button>
+        </div>
+    </div>
+</div>
     
     <!-- 统计分析模态框 -->
     <div id="stats-modal" class="modal">

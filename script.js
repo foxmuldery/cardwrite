@@ -9,7 +9,7 @@ let scriptCards = {
 };
 
 // 常量和配置
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '0.8.1';
 const AUTO_SAVE_INTERVAL = 60000; // 自动保存间隔，单位毫秒（1分钟）
 let autoSaveTimer = null;
 let lastAutoSaveTime = 0;
@@ -165,6 +165,8 @@ const filenameForm = document.getElementById('filename-form');
 const importForm = document.getElementById('import-form');
 const feedbackForm = document.getElementById('feedback-form');
 const projectTitle = document.getElementById('project-title');
+const loadProjectModal = document.getElementById('load-project-modal');
+const projectList = document.getElementById('project-list');
 
 // Sortable实例集合
 const sortableInstances = [];
@@ -204,6 +206,32 @@ function initApp() {
     
     // 初始化反馈功能
     initFeedback();
+    
+    // 初始化垃圾桶和灵感箱功能
+    initTrashBin();
+    initInspirationBox();
+}
+
+// 初始化垃圾桶功能
+function initTrashBin() {
+    const trashBinBtn = document.getElementById('trash-bin-btn');
+    if (!trashBinBtn) return;
+    
+    trashBinBtn.addEventListener('click', function() {
+        // 可以添加垃圾桶功能，例如显示最近删除的卡片等
+        showToast('垃圾桶功能将在后续版本开放');
+    });
+}
+
+// 初始化灵感箱功能
+function initInspirationBox() {
+    const inspirationBtn = document.getElementById('inspiration-btn');
+    if (!inspirationBtn) return;
+    
+    inspirationBtn.addEventListener('click', function() {
+        // 可以添加灵感箱功能，例如随机提示、创意生成等
+        showToast('灵感箱功能将在后续版本开放');
+    });
 }
 
 // 初始化自动保存功能
@@ -275,7 +303,7 @@ function initFeedback() {
                 `联系邮箱: ${email || '未提供'}`
             );
             
-            window.open(`mailto:your-support-email@example.com?subject=${subject}&body=${body}`);
+            window.open(`mailto:yuanzhe2023@hotmail.com?subject=${subject}&body=${body}`);
             
             // 重置表单并关闭模态框
             feedbackForm.reset();
@@ -464,16 +492,16 @@ function setupEventListeners() {
     
     // 加载项目按钮
     document.getElementById('load-project').addEventListener('click', function() {
-        const projects = getAllSavedProjects();
-        if (projects.length === 0) {
-            alert('没有找到已保存的项目');
+    // 先检查是否有未保存的更改
+    const hasUnsavedChanges = checkUnsavedChanges();
+    if (hasUnsavedChanges) {
+        if (!confirm('当前项目有未保存的更改，继续加载其他项目会丢失这些更改。确定要继续吗？')) {
             return;
         }
-        
-        const projectName = prompt('输入要加载的项目名称: ' + projects.join(', '));
-        if (projectName && projects.includes(projectName)) {
-            loadProject(projectName);
-        }
+    }
+    
+    // 显示项目加载模态框
+        showProjectLoadModal();
     });
     
     // 导入项目按钮
@@ -533,17 +561,18 @@ function setupEventListeners() {
         }
     });
     
-    // 模态框关闭按钮
+   // 模态框关闭按钮
     document.querySelectorAll('.close-modal').forEach(closeBtn => {
-        closeBtn.addEventListener('click', function() {
-            cardModal.style.display = 'none';
-            statsModal.style.display = 'none';
-            filenameModal.style.display = 'none';
-            importModal.style.display = 'none';
-            if (feedbackModal) feedbackModal.style.display = 'none';
-        });
+    closeBtn.addEventListener('click', function() {
+        cardModal.style.display = 'none';
+        statsModal.style.display = 'none';
+        filenameModal.style.display = 'none';
+        importModal.style.display = 'none';
+        loadProjectModal.style.display = 'none';
+        if (feedbackModal) feedbackModal.style.display = 'none';
     });
-    
+});
+
     // 保存卡片表单
     cardForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -562,13 +591,14 @@ function setupEventListeners() {
     // 导出大纲按钮
     document.getElementById('export-outline').addEventListener('click', exportOutline);
     
-    // 点击模态框外部关闭
+   // 点击模态框外部关闭
     window.addEventListener('click', function(e) {
-        if (e.target === cardModal) cardModal.style.display = 'none';
-        if (e.target === statsModal) statsModal.style.display = 'none';
-        if (e.target === filenameModal) filenameModal.style.display = 'none';
-        if (e.target === importModal) importModal.style.display = 'none';
-        if (feedbackModal && e.target === feedbackModal) feedbackModal.style.display = 'none';
+    if (e.target === cardModal) cardModal.style.display = 'none';
+    if (e.target === statsModal) statsModal.style.display = 'none';
+    if (e.target === filenameModal) filenameModal.style.display = 'none';
+    if (e.target === importModal) importModal.style.display = 'none';
+    if (e.target === loadProjectModal) loadProjectModal.style.display = 'none';
+    if (feedbackModal && e.target === feedbackModal) feedbackModal.style.display = 'none';
     });
     
     // 视图筛选按钮
@@ -675,6 +705,12 @@ function initStatusOptions() {
             
             // 更新隐藏输入值
             statusInput.value = this.getAttribute('data-status');
+            
+            // 添加动画效果以提供更明显的反馈
+            this.classList.add('status-selected-animation');
+            setTimeout(() => {
+                this.classList.remove('status-selected-animation');
+            }, 300);
         });
     });
 }
@@ -846,6 +882,9 @@ function initSortable() {
     });
     sortableInstances.length = 0;
     
+    // 获取垃圾桶元素
+    const trashBin = document.getElementById('drag-trash-bin');
+    
     // 获取所有卡片容器
     const cardLists = document.querySelectorAll('.card-list');
     
@@ -865,13 +904,64 @@ function initSortable() {
             dragClass: 'sortable-drag',
             filter: '.card-stack', // 忽略堆叠容器（需单独处理）
             
+            onStart: function(evt) {
+                // 显示垃圾桶
+                if (trashBin) {
+                    // 隐藏浮动菜单和添加按钮
+                    document.querySelector('.floating-menu').style.display = 'none';
+                    document.getElementById('quick-add-btn').style.display = 'none';
+                    
+                    // 显示垃圾桶
+                    trashBin.classList.add('visible');
+                    
+                    // 添加到拖拽元素上的标记类
+                    evt.item.classList.add('is-dragging');
+                }
+                
+                // 初始化垃圾桶拖拽目标
+                initTrashBinTarget();
+            },
+            
             onEnd: function(evt) {
+                // 隐藏垃圾桶，显示浮动菜单和添加按钮
+                if (trashBin) {
+                    trashBin.classList.remove('visible');
+                    trashBin.classList.remove('drag-over');
+                    document.querySelector('.floating-menu').style.display = 'flex';
+                    document.getElementById('quick-add-btn').style.display = 'flex';
+                    
+                    // 移除拖拽元素上的标记类
+                    evt.item.classList.remove('is-dragging');
+                }
+                
                 // 如果拖动的是卡片堆叠，忽略
                 if (evt.item.classList.contains('card-stack')) return;
                 
                 const cardId = evt.item.getAttribute('data-id');
                 const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
                 const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
+                
+                // 检查是否被拖到了垃圾桶
+                if (evt.to.id === 'trash-bin-target') {
+                    // 从数据中删除卡片
+                    scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
+                    
+                    // 保存更改
+                    saveToLocalStorage();
+                    
+                    // 更新UI
+                    updateCardCounts();
+                    updateBeatSlotStatus();
+                    
+                    // 重新渲染源节拍的卡片
+                    renderActBeatCards(fromAct, fromBeat);
+                    
+                    // 显示删除提示
+                    showToast('卡片已删除');
+                    
+                    return;
+                }
+                
                 const toAct = evt.to.closest('.beat-slot').getAttribute('data-act');
                 const toBeat = evt.to.closest('.beat-slot').getAttribute('data-beat');
                 
@@ -913,6 +1003,39 @@ function initSortable() {
     });
 }
 
+// 初始化垃圾桶拖拽目标
+function initTrashBinTarget() {
+    const trashBin = document.getElementById('drag-trash-bin');
+    if (!trashBin) return;
+    
+    // 检查是否已经初始化
+    if (document.getElementById('trash-bin-target')) return;
+    
+    // 创建一个隐藏的拖拽目标元素
+    const trashTarget = document.createElement('div');
+    trashTarget.id = 'trash-bin-target';
+    trashTarget.style.display = 'none';
+    trashBin.appendChild(trashTarget);
+    
+    // 初始化Sortable
+    const trashSortable = new Sortable(trashTarget, {
+        group: 'cards',
+        sort: false,
+        animation: 150
+    });
+    
+    sortableInstances.push(trashSortable);
+    
+    // 添加拖拽进入和离开的事件处理
+    trashBin.addEventListener('dragover', function(e) {
+        this.classList.add('drag-over');
+    });
+    
+    trashBin.addEventListener('dragleave', function(e) {
+        this.classList.remove('drag-over');
+    });
+}
+
 // 获取所有已保存项目
 function getAllSavedProjects() {
     const projects = [];
@@ -929,38 +1052,253 @@ function getAllSavedProjects() {
 
 // 加载项目
 function loadProject(name) {
-    // 处理默认项目情况
-    const storageKey = name === '默认项目' ? 'scriptCards' : 'scriptCards_' + name;
-    const data = localStorage.getItem(storageKey);
-    
-    if (data) {
-        try {
-            scriptCards = JSON.parse(data);
-            
-            // 确保类型属性存在
-            if (!scriptCards.project.type) {
-                scriptCards.project.type = 'tv-hour';
-            }
-            
-            // 更新类型选择器
-            scriptTypeSelector.value = scriptCards.project.type;
-            
-            // 迁移旧的卡片类型
-            migrateCardStatus();
-            
-            // 重新生成结构并确保数据完整
-            generateScriptStructure();
-            ensureDataStructure();
-            
-            projectTitle.value = scriptCards.project.title;
-            renderAllCards();
-            updateCardCounts();
-            updateBeatSlotStatus();
-            alert('项目已加载!');
-        } catch (e) {
-            console.error('加载项目出错:', e);
-            alert('加载项目时出错');
+    try {
+        // 处理默认项目情况
+        const storageKey = name === '默认项目' ? 'scriptCards' : 'scriptCards_' + name;
+        const data = localStorage.getItem(storageKey);
+        
+        if (!data) {
+            throw new Error('项目数据不存在');
         }
+        
+        // 解析项目数据
+        scriptCards = JSON.parse(data);
+        
+        // 确保类型属性存在
+        if (!scriptCards.project.type) {
+            scriptCards.project.type = 'tv-hour';
+        }
+        
+        // 更新类型选择器
+        scriptTypeSelector.value = scriptCards.project.type;
+        
+        // 迁移旧的卡片类型
+        migrateCardStatus();
+        
+        // 重新生成结构并确保数据完整
+        generateScriptStructure();
+        ensureDataStructure();
+        
+        // 更新UI
+        projectTitle.value = scriptCards.project.title || name;
+        renderAllCards();
+        updateCardCounts();
+        updateBeatSlotStatus();
+        
+        showToast(`项目 "${name}" 已成功加载`);
+    } catch (e) {
+        console.error('加载项目出错:', e);
+        
+        // 提供更具体的错误提示
+        if (e.message.includes('JSON')) {
+            alert('加载项目失败：项目数据格式不正确');
+        } else if (e.message.includes('不存在')) {
+            alert('加载项目失败：项目数据不存在或已被删除');
+        } else {
+            alert('加载项目失败：' + e.message);
+        }
+    }
+}
+
+// 检查是否有未保存的更改
+function checkUnsavedChanges() {
+    // 如果上一次保存的时间戳与当前内存中的不同，说明有更改未保存
+    const savedData = localStorage.getItem('scriptCards');
+    if (!savedData) return false;
+    
+    try {
+        const savedCards = JSON.parse(savedData);
+        return savedCards.project.lastSaved !== scriptCards.project.lastSaved;
+    } catch (e) {
+        return false;
+    }
+}
+
+// 显示项目加载模态框
+function showProjectLoadModal() {
+    // 加载项目列表
+    loadProjectList();
+    
+    // 显示模态框
+    loadProjectModal.style.display = 'block';
+    
+    // 添加刷新按钮事件
+    document.getElementById('refresh-project-list').addEventListener('click', loadProjectList);
+}
+
+// 加载项目列表
+function loadProjectList() {
+    const projects = getAllSavedProjectsWithDetails();
+    
+    // 清空现有列表
+    projectList.innerHTML = '';
+    
+    if (projects.length === 0) {
+        projectList.innerHTML = '<div class="no-projects">没有找到已保存的项目</div>';
+        return;
+    }
+    
+    // 当前项目的键名
+    const currentProjectKey = 'scriptCards'; // 假设当前项目就是默认项目
+    
+    // 添加项目到列表
+    projects.forEach(project => {
+        const projectItem = document.createElement('div');
+        projectItem.className = 'project-item';
+        if (project.key === currentProjectKey) {
+            projectItem.classList.add('current');
+        }
+        
+        projectItem.innerHTML = `
+            <div class="project-name">${project.name}</div>
+            <div class="project-date">${new Date(project.lastSaved).toLocaleString()}</div>
+            <div class="project-actions">
+                <button class="project-action-btn load-btn" data-project="${project.name}">加载</button>
+                <button class="project-action-btn rename-btn" data-project="${project.name}">重命名</button>
+                <button class="project-action-btn delete-btn" data-project="${project.name}">删除</button>
+            </div>
+        `;
+        
+        projectList.appendChild(projectItem);
+    });
+    
+    // 添加加载、重命名和删除按钮的事件监听
+    document.querySelectorAll('.load-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectName = this.getAttribute('data-project');
+            loadProject(projectName);
+            loadProjectModal.style.display = 'none';
+        });
+    });
+    
+    document.querySelectorAll('.rename-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectName = this.getAttribute('data-project');
+            renameProject(projectName);
+        });
+    });
+    
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const projectName = this.getAttribute('data-project');
+            deleteProject(projectName);
+        });
+    });
+}
+
+// 获取所有已保存项目及其详细信息
+function getAllSavedProjectsWithDetails() {
+    const projects = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        // 检查两种可能的前缀
+        if (key === 'scriptCards' || key.startsWith('scriptCards_')) {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                const projectName = key === 'scriptCards' ? '默认项目' : key.replace('scriptCards_', '');
+                
+                projects.push({
+                    key: key,
+                    name: projectName,
+                    title: data.project.title || projectName,
+                    type: data.project.type || 'tv-hour',
+                    lastSaved: data.project.lastSaved || new Date().toISOString(),
+                    cardCount: countCards(data)
+                });
+            } catch (e) {
+                console.error('解析项目数据出错:', e);
+                // 即使解析出错，也添加基本信息
+                const projectName = key === 'scriptCards' ? '默认项目' : key.replace('scriptCards_', '');
+                projects.push({
+                    key: key,
+                    name: projectName,
+                    lastSaved: new Date().toISOString(),
+                    error: true
+                });
+            }
+        }
+    }
+    
+    // 按最后保存时间排序，最新的在前面
+    return projects.sort((a, b) => new Date(b.lastSaved) - new Date(a.lastSaved));
+}
+
+// 计算项目中的卡片总数
+function countCards(data) {
+    let count = 0;
+    if (data.acts) {
+        for (const actId in data.acts) {
+            for (const beatId in data.acts[actId]) {
+                if (Array.isArray(data.acts[actId][beatId])) {
+                    count += data.acts[actId][beatId].length;
+                }
+            }
+        }
+    }
+    return count;
+}
+
+// 重命名项目
+function renameProject(oldName) {
+    const newName = prompt(`请输入新的项目名称 (当前: ${oldName}):`);
+    if (!newName || newName === oldName) return;
+    
+    // 检查新名称是否已存在
+    const projects = getAllSavedProjects();
+    if (projects.includes(newName)) {
+        alert('该项目名称已存在，请使用其他名称');
+        return;
+    }
+    
+    try {
+        // 获取旧项目数据
+        const oldKey = oldName === '默认项目' ? 'scriptCards' : 'scriptCards_' + oldName;
+        const projectData = localStorage.getItem(oldKey);
+        
+        if (!projectData) {
+            alert('项目数据不存在');
+            return;
+        }
+        
+        // 创建新项目
+        const newKey = 'scriptCards_' + newName;
+        localStorage.setItem(newKey, projectData);
+        
+        // 如果不是默认项目，则删除旧项目
+        if (oldName !== '默认项目') {
+            localStorage.removeItem(oldKey);
+        }
+        
+        // 更新项目列表
+        loadProjectList();
+        showToast(`项目 "${oldName}" 已重命名为 "${newName}"`);
+    } catch (e) {
+        console.error('重命名项目出错:', e);
+        alert('重命名项目时出错');
+    }
+}
+
+// 删除项目
+function deleteProject(name) {
+    if (name === '默认项目') {
+        alert('默认项目不能删除');
+        return;
+    }
+    
+    if (!confirm(`确定要删除项目 "${name}" 吗？此操作不可恢复。`)) {
+        return;
+    }
+    
+    try {
+        const key = 'scriptCards_' + name;
+        localStorage.removeItem(key);
+        
+        // 更新项目列表
+        loadProjectList();
+        showToast(`项目 "${name}" 已删除`);
+    } catch (e) {
+        console.error('删除项目出错:', e);
+        alert('删除项目时出错');
     }
 }
 
@@ -1353,8 +1691,13 @@ function createCardStack(container, cards, act, beat) {
         const previewEl = document.createElement('div');
         previewEl.className = 'stack-preview';
         
+        // 只有当场景位置不为空时才显示位置
+        const locationDisplay = card.location.place 
+            ? `${card.location.type}. ${card.location.place}` 
+            : '';
+        
         previewEl.innerHTML = `
-            <div class="card-location">${card.location.type}. ${card.location.place}</div>
+            ${locationDisplay ? `<div class="card-location">${locationDisplay}</div>` : ''}
             <div class="card-description">${truncateText(card.description, 40)}</div>
         `;
         
@@ -1407,31 +1750,19 @@ function renderExpandedCards(container, cards, act, beat) {
         cardEl.setAttribute('data-id', card.id);
         cardEl.setAttribute('data-status', card.status || 'confirmed');
         
-        // 状态 Emoji 映射
-        const statusEmojis = {
-            'confirmed': '✅',
-            'pending': '⏳',
-            'question': '❓'
-        };
+        // 只有当场景位置不为空时才显示位置
+        const locationDisplay = card.location.place 
+            ? `${card.location.type}. ${card.location.place}` 
+            : '';
         
         cardEl.innerHTML = `
             <div class="card-type-indicator"></div>
-            <div class="status-emoji" data-id="${card.id}" data-act="${act}" data-beat="${beat}">
-                ${statusEmojis[card.status || 'confirmed']}
-            </div>
-            <div class="card-location">${card.location.type}. ${card.location.place}</div>
+            ${locationDisplay ? `<div class="card-location">${locationDisplay}</div>` : ''}
             <div class="card-description">${card.description}</div>
         `;
         
         // 卡片点击事件
         cardEl.addEventListener('click', function(e) {
-            // 如果点击的是状态 Emoji，则切换状态而不打开编辑框
-            if (e.target.classList.contains('status-emoji')) {
-                e.stopPropagation();
-                toggleCardStatus(e.target.getAttribute('data-id'), act, beat);
-                return;
-            }
-            
             // 防止点击触发拖动
             e.stopPropagation();
             openCardModal(card.id, act, beat);
@@ -1469,31 +1800,19 @@ function renderIndividualCards(container, cards, act, beat) {
         cardEl.setAttribute('data-id', card.id);
         cardEl.setAttribute('data-status', card.status || 'confirmed');
         
-        // 状态 Emoji 映射
-        const statusEmojis = {
-            'confirmed': '✅',
-            'pending': '⏳',
-            'question': '❓'
-        };
+        // 只有当场景位置不为空时才显示位置
+        const locationDisplay = card.location.place 
+            ? `${card.location.type}. ${card.location.place}` 
+            : '';
         
         cardEl.innerHTML = `
             <div class="card-type-indicator"></div>
-            <div class="status-emoji" data-id="${card.id}" data-act="${act}" data-beat="${beat}">
-                ${statusEmojis[card.status || 'confirmed']}
-            </div>
-            <div class="card-location">${card.location.type}. ${card.location.place}</div>
+            ${locationDisplay ? `<div class="card-location">${locationDisplay}</div>` : ''}
             <div class="card-description">${card.description}</div>
         `;
         
         // 卡片点击事件
         cardEl.addEventListener('click', function(e) {
-            // 如果点击的是状态 Emoji，则切换状态而不打开编辑框
-            if (e.target.classList.contains('status-emoji')) {
-                e.stopPropagation();
-                toggleCardStatus(e.target.getAttribute('data-id'), act, beat);
-                return;
-            }
-            
             // 防止点击触发拖动
             e.stopPropagation();
             openCardModal(card.id, act, beat);
@@ -1534,6 +1853,9 @@ function initSortableForContainer(container, act, beat) {
     const cardList = container.querySelector('.expanded-stack');
     if (!cardList) return;
     
+    // 获取垃圾桶元素
+    const trashBin = document.getElementById('drag-trash-bin');
+    
     const sortable = new Sortable(cardList, {
         group: 'cards',
         animation: 150,
@@ -1542,11 +1864,62 @@ function initSortableForContainer(container, act, beat) {
         dragClass: 'sortable-drag',
         filter: '.stack-header', // 忽略标题行
         
+        onStart: function(evt) {
+            // 显示垃圾桶
+            if (trashBin) {
+                // 隐藏浮动菜单和添加按钮
+                document.querySelector('.floating-menu').style.display = 'none';
+                document.getElementById('quick-add-btn').style.display = 'none';
+                
+                // 显示垃圾桶
+                trashBin.classList.add('visible');
+                
+                // 添加到拖拽元素上的标记类
+                evt.item.classList.add('is-dragging');
+            }
+            
+            // 初始化垃圾桶拖拽目标
+            initTrashBinTarget();
+        },
+        
         onEnd: function(evt) {
+            // 隐藏垃圾桶，显示浮动菜单和添加按钮
+            if (trashBin) {
+                trashBin.classList.remove('visible');
+                trashBin.classList.remove('drag-over');
+                document.querySelector('.floating-menu').style.display = 'flex';
+                document.getElementById('quick-add-btn').style.display = 'flex';
+                
+                // 移除拖拽元素上的标记类
+                evt.item.classList.remove('is-dragging');
+            }
+            
             if (evt.item.classList.contains('card')) {
                 const cardId = evt.item.getAttribute('data-id');
                 const fromAct = act;
                 const fromBeat = beat;
+                
+                // 检查是否被拖到了垃圾桶
+                if (evt.to.id === 'trash-bin-target') {
+                    // 从数据中删除卡片
+                    scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
+                    
+                    // 保存更改
+                    saveToLocalStorage();
+                    
+                    // 更新UI
+                    updateCardCounts();
+                    updateBeatSlotStatus();
+                    
+                    // 重新渲染源节拍的卡片
+                    renderActBeatCards(fromAct, fromBeat);
+                    
+                    // 显示删除提示
+                    showToast('卡片已删除');
+                    
+                    return;
+                }
+                
                 const toEl = evt.to.closest('.expanded-stack') || evt.to;
                 const toAct = toEl.closest('.beat-slot').getAttribute('data-act');
                 const toBeat = toEl.closest('.beat-slot').getAttribute('data-beat');
@@ -1807,7 +2180,11 @@ function exportOutline() {
             outline += `### ${beat.title} (${beat.recommended})\n\n`;
             
             scriptCards.acts[actId][beat.id].forEach((card, index) => {
-                outline += `**场景 ${index + 1}:** ${card.location.type}. ${card.location.place}\n`;
+                const locationDisplay = card.location.place 
+                    ? `${card.location.type}. ${card.location.place}` 
+                    : '场景未设置';
+                    
+                outline += `**场景 ${index + 1}:** ${locationDisplay}\n`;
                 outline += `${card.description}\n\n`;
                 
                 if (card.conflict.protagonist || card.conflict.goal || card.conflict.obstacle) {
@@ -1835,7 +2212,11 @@ function exportOutline() {
         outline += `## 创意桶\n\n`;
         
         scriptCards.acts.bucket.ideas.forEach((card, index) => {
-            outline += `**想法 ${index + 1}:** ${card.location.type}. ${card.location.place}\n`;
+            const locationDisplay = card.location.place 
+                ? `${card.location.type}. ${card.location.place}` 
+                : '场景未设置';
+                
+            outline += `**想法 ${index + 1}:** ${locationDisplay}\n`;
             outline += `${card.description}\n\n`;
         });
     }
