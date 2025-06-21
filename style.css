@@ -90,6 +90,7 @@ input, select, textarea {
 
 .beat-slot {
     min-width: 250px;
+    width: 250px; /* 固定宽度 */
     margin: 0 10px;
     background: #f7f7f7;
     border: 1px solid #ddd;
@@ -113,17 +114,23 @@ input, select, textarea {
 
 .beat-slot h3 {
     padding: 10px;
+    height: 40px; /* 固定高度 */
     background: #95a5a6;
     color: white;
     text-align: center;
     font-size: 14px;
     border-radius: 5px 5px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
 }
 
 .card-list {
     padding: 10px;
-    min-height: 120px;
-    max-height: 300px;
+    height: 250px; /* 固定高度 */
+    min-height: unset; /* 覆盖之前的设置 */
+    max-height: unset; /* 覆盖之前的设置 */
     overflow-y: auto;
     flex-grow: 1;
 }
@@ -183,3 +190,746 @@ input, select, textarea {
 .card[data-type="finale"] .card-type-indicator { background-color: #e67e22; }
 
 /* 拖动时的样式 */
+/* 拖动时的样式 */
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-chosen {
+    background-color: #f8f9fa;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* 卡片堆叠效果 */
+.card-stack {
+    position: relative;
+    height: 80px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-stack::before {
+    content: attr(data-count) "张卡片";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #34495e;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    z-index: 5;
+}
+
+.card-stack .stack-preview {
+    position: absolute;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    padding: 15px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.card-stack .stack-preview:nth-child(1) {
+    top: 0;
+    left: 0;
+    z-index: 4;
+}
+
+.card-stack .stack-preview:nth-child(2) {
+    top: 3px;
+    left: 3px;
+    z-index: 3;
+    opacity: 0.8;
+}
+
+.card-stack .stack-preview:nth-child(3) {
+    top: 6px;
+    left: 6px;
+    z-index: 2;
+    opacity: 0.6;
+}
+
+/* 卡片堆叠悬停效果 */
+.card-stack:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 卡片展开时的容器 */
+.expanded-stack {
+    background: rgba(236, 240, 241, 0.8);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.expanded-stack .stack-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+.expanded-stack .stack-title {
+    font-weight: bold;
+    color: #34495e;
+}
+
+.expanded-stack .collapse-btn {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.expanded-stack .collapse-btn:hover {
+    background: #7f8c8d;
+}
+
+/* 模态框样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+/* 修改统计模态框样式 */
+#stats-modal .modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 90%;
+    max-width: 800px;
+}
+  
+.stats-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* 桶区域样式 */
+.bucket-row {
+    background: #ffeaa7;
+}
+
+.bucket-row .act-header {
+    background: #fdcb6e;
+    color: #333;
+}
+
+.bucket {
+    background: #fff6dd;
+}
+
+/* 页脚样式 */
+footer {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+/* 卡片计数样式 */
+.card-count {
+    font-size: 14px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+/* 剧本类型选择器样式 */
+.script-type-selector {
+    padding: 8px 12px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+}
+
+/* 节拍推荐数量样式 */
+.beat-recommended {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin: 0;
+    padding: 5px 10px;
+    text-align: center;
+    height: 25px; /* 固定高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 幕标题样式优化 */
+.act-header h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
+/* 改进的节拍提示样式 */
+.beat-hint {
+    padding: 10px;
+    font-style: italic;
+    font-size: 12px;
+    color: #95a5a6;
+    text-align: center;
+    border-bottom: 1px dashed #ecf0f1;
+    height: 60px; /* 固定高度 */
+    min-height: unset; /* 覆盖之前的设置 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* 隐藏有卡片时的提示 */
+.beat-slot.has-cards .beat-hint {
+    display: none;
+}
+
+/* 单幕视图时的样式 */
+.board.filtered-view .act-row {
+    display: flex;
+}
+
+.board.filtered-view .act-row.hidden {
+    display: none;
+}
+
+.board.filtered-view .beat-slots {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.board.filtered-view .beat-slot {
+    width: calc(33.33% - 20px);
+    min-width: auto;
+}
+
+/* 视图控制样式 */
+.view-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 0;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 60px;
+    z-index: 90;
+}
+
+.view-btn {
+    padding: 8px 15px;
+    background: #ecf0f1;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+    background: #dfe6e9;
+}
+
+.view-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+}
+
+/* 顶部按钮样式调整 */
+.project-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.header-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 卡片状态 Emoji */
+.status-emoji {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 5;
+}
+
+/* 确保不同状态的卡片有不同的视觉样式 */
+.card[data-status="confirmed"] {
+    border-left: 3px solid #2ecc71;
+}
+
+.card[data-status="pending"] {
+    border-left: 3px solid #f1c40f;
+}
+
+.card[data-status="question"] {
+    border-left: 3px solid #e74c3c;
+}
+
+/* 版本信息样式调整 */
+.version-info {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  vertical-align: middle;
+}
+
+/* 反馈按钮 */
+.feedback-btn {
+  background-color: #9b59b6;
+}
+
+.feedback-btn:hover {
+  background-color: #8e44ad;
+}
+
+/* 自动保存指示器 */
+.autosave-indicator {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(46, 204, 113, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 100;
+}
+
+.autosave-indicator.show {
+  opacity: 1;
+}
+
+/* 提示消息样式 */
+.toast-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.toast-message.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* 改进的快速添加卡片菜单 */
+.quick-add-menu {
+  position: fixed;
+  bottom: 100px;
+  right: 40px;
+  width: 400px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+  z-index: 96;
+  display: none;
+  overflow: hidden;
+}
+
+.quick-add-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #3498db;
+  color: white;
+}
+
+.quick-add-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-quick-add {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-quick-add:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.quick-add-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.quick-add-section {
+  margin-bottom: 20px;
+}
+
+.quick-add-section label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.act-beat-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.act-selector {
+  flex: 1;
+}
+
+.beat-selector {
+  flex: 2;
+}
+
+.status-options {
+  display: flex;
+  gap: 15px;
+}
+
+.status-option {
+  flex: 1;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-option:hover {
+  background: #f8f9fa;
+}
+
+.status-option.selected {
+  border-color: #3498db;
+  background: #f0f9ff;
+}
+
+.status-emoji {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.location-input {
+  display: flex;
+  gap: 10px;
+}
+
+#quick-add-location-type {
+  width: 100px;
+}
+
+#quick-add-location {
+  flex-grow: 1;
+}
+
+#quick-add-description {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.quick-add-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.quick-add-actions button {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
+}
+
+#quick-add-save {
+  background: #2ecc71;
+}
+
+#quick-add-save:hover {
+  background: #27ae60;
+}
+
+#quick-add-save-and-new {
+  background: #3498db;
+}
+
+#quick-add-save-and-new:hover {
+  background: #2980b9;
+}
+
+/* 将下拉菜单和输入框的样式更统一 */
+select, input, textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+select:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* 优化冲突输入区域 */
+.conflict-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+/* 优化情感变化输入区域 */
+.emotional-change-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#emotional-change-type {
+  width: 120px;
+}
+
+#emotional-change-content {
+  flex-grow: 1;
+}
+
+/* 浮动添加按钮 */
+.floating-add-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #3498db;
+  color: white;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 95;
+  transition: all 0.2s;
+}
+
+.floating-add-button:hover {
+  transform: scale(1.1);
+  background: #2980b9;
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+    .board.filtered-view .beat-slot {
+        width: calc(50% - 20px);
+    }
+}
+
+@media (max-width: 768px) {
+    .header-buttons {
+        flex-direction: row;
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .view-controls {
+        flex-wrap: wrap;
+    }
+    
+    .board.filtered-view .beat-slot {
+        width: 100%;
+    }
+    
+    .beat-slots {
+        flex-direction: column;
+    }
+    
+    .beat-slot {
+        min-width: 100%;
+        margin: 10px 0;
+    }
+    
+    .conflict-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .emotional-change-inputs {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    #emotional-change-type,
+    #emotional-change-content {
+        width: 100%;
+    }
+}
+
+/* iPad 和移动设备优化 */
+@media (max-width: 1024px) {
+    /* iPad Pro 和其他平板设备 */
+    html {
+      font-size: 18px; /* 增大基础字体大小 */
+    }
+    
+    .beat-slot {
+      min-width: 280px;
+    }
+    
+    button, .add-card-btn, .view-btn {
+      min-height: 44px; /* Apple 推荐的最小触控尺寸 */
+      padding: 12px 15px;
+    }
+    
+    .card {
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    /* 改进卡片拖动手柄 */
+    .card::before {
+      content: "≡";
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      color: #ccc;
+      font-size: 20px;
+      opacity: 0.7;
+    }
+}
+
+/* 检测 iPad 设备 */
+@media (pointer: coarse) and (min-width: 768px) and (max-width: 1024px) {
+    /* 特定的 iPad 优化 */
+    .board-container {
+      -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+    }
+    
+    /* 优化触控区域 */
+    .beat-slot h3 {
+      padding: 15px 10px;
+    }
+    
+    .card-list {
+      min-height: 150px; /* 增大拖放区域 */
+    }
+    
+    .quick-add-menu {
+      width: 500px;
+    }
+    
+    .status-options {
+      gap: 20px;
+    }
+    
+    select, input, textarea, button {
+      font-size: 16px; /* 更大的文本提高可点击性 */
+    }
+}
+
+@media (max-width: 500px) {
+  .quick-add-menu {
+    width: 90%;
+    right: 5%;
+    left: 5%;
+  }
+  
+  .status-options {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .quick-add-actions {
+    flex-direction: column;
+  }
+}

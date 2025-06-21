@@ -10,276 +10,91 @@
 </head>
 <body>
     <header>
-        <h1>老袁编剧卡片系统</h1>
+        <h1>老袁编剧卡片系统<span class="version-info">v1.0.0</span></h1>
         <div class="project-controls">
+            <select id="script-type" class="script-type-selector">
+                <option value="movie">电影</option>
+                <option value="tv-hour" selected>一小时剧集</option>
+                <option value="tv-half">半小时喜剧</option>
+            </select>
             <input type="text" id="project-title" placeholder="剧本名称">
-            <button id="save-project">保存项目</button>
-            <button id="load-project">加载项目</button>
-            <button id="import-project">导入项目</button>
+            <div class="header-buttons">
+                <button id="save-project">保存项目</button>
+                <button id="load-project">加载项目</button>
+                <button id="import-project">导入项目</button>
+                <button id="show-stats">显示统计</button>
+                <button id="export-outline">导出大纲</button>
+                <button id="feedback-btn" class="feedback-btn">反馈</button>
+            </div>
         </div>
     </header>
     
+    <div class="view-controls">
+        <button id="view-all" class="view-btn active">全部</button>
+        <button id="view-act-1" class="view-btn">第一幕</button>
+        <button id="view-act-2" class="view-btn">第二幕</button>
+        <button id="view-act-3" class="view-btn">第三幕</button>
+        <button id="view-act-4" class="view-btn">第四幕</button>
+    </div>
+    
     <div class="board-container">
         <div class="board" id="script-board">
-            <!-- 第一幕 -->
-            <div class="act-row">
-                <div class="act-header">
-                    <h2>第一幕</h2>
-                    <span class="card-count">0 张卡片</span>
-                </div>
-                <div class="beat-slots">
-                    <!-- 开场前区域 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="pre-opening">
-                        <h3>前置区域</h3>
-                        <div class="card-list" id="act-1-pre-opening"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="pre-opening">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="1" data-beat="opening">
-                        <h3>开场画面</h3>
-                        <div class="card-list" id="act-1-opening"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="opening">+</button>
-                    </div>
-                    
-                    <!-- 开场和主题之间 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="between-opening-theme">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-1-between-opening-theme"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="between-opening-theme">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="1" data-beat="theme">
-                        <h3>主题陈述</h3>
-                        <div class="card-list" id="act-1-theme"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="theme">+</button>
-                    </div>
-                    
-                    <!-- 主题和铺垫之间 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="between-theme-setup">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-1-between-theme-setup"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="between-theme-setup">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="1" data-beat="setup">
-                        <h3>铺垫</h3>
-                        <div class="card-list" id="act-1-setup"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="setup">+</button>
-                    </div>
-                    
-                    <!-- 铺垫和催化剂之间 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="between-setup-catalyst">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-1-between-setup-catalyst"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="between-setup-catalyst">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="1" data-beat="catalyst">
-                        <h3>催化剂</h3>
-                        <div class="card-list" id="act-1-catalyst"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="catalyst">+</button>
-                    </div>
-                    
-                    <!-- 催化剂和争论之间 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="between-catalyst-debate">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-1-between-catalyst-debate"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="between-catalyst-debate">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="1" data-beat="debate">
-                        <h3>争论</h3>
-                        <div class="card-list" id="act-1-debate"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="debate">+</button>
-                    </div>
-                    
-                    <!-- 争论后区域 -->
-                    <div class="beat-slot flexible-area" data-act="1" data-beat="post-debate">
-                        <h3>后置区域</h3>
-                        <div class="card-list" id="act-1-post-debate"></div>
-                        <button class="add-card-btn" data-act="1" data-beat="post-debate">+</button>
-                    </div>
+            <!-- 动态生成的幕结构将在这里显示 -->
+        </div>
+    </div>
+    
+    <!-- 悬浮添加按钮 -->
+    <div class="floating-add-button" id="quick-add-btn">+</div>
+    
+    <!-- 快速添加卡片菜单 -->
+    <div class="quick-add-menu" id="quick-add-menu">
+        <div class="quick-add-header">
+            <h3>快速添加卡片</h3>
+            <button class="close-quick-add">&times;</button>
+        </div>
+        <div class="quick-add-content">
+            <div class="quick-add-section">
+                <label>添加到：</label>
+                <div class="act-beat-selector">
+                    <!-- 动态生成的幕和节拍选择器 -->
                 </div>
             </div>
-
-            <!-- 第二幕 -->
-            <div class="act-row">
-                <div class="act-header">
-                    <h2>第二幕</h2>
-                    <span class="card-count">0 张卡片</span>
+            
+            <div class="quick-add-section">
+                <label>状态：</label>
+                <div class="status-options">
+                    <div class="status-option" data-status="confirmed">
+                        <span class="status-emoji">✅</span> 确认
+                    </div>
+                    <div class="status-option" data-status="pending">
+                        <span class="status-emoji">⏳</span> 保留
+                    </div>
+                    <div class="status-option" data-status="question">
+                        <span class="status-emoji">❓</span> 存疑
+                    </div>
                 </div>
-                <div class="beat-slots">
-                    <!-- B故事前区域 -->
-                    <div class="beat-slot flexible-area" data-act="2" data-beat="pre-bstory">
-                        <h3>前置区域</h3>
-                        <div class="card-list" id="act-2-pre-bstory"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="pre-bstory">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="2" data-beat="bstory">
-                        <h3>B故事</h3>
-                        <div class="card-list" id="act-2-bstory"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="bstory">+</button>
-                    </div>
-                    
-                    <!-- B故事和游戏时间之间 -->
-                    <div class="beat-slot flexible-area" data-act="2" data-beat="between-bstory-fun">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-2-between-bstory-fun"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="between-bstory-fun">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="2" data-beat="fun">
-                        <h3>游戏时间</h3>
-                        <div class="card-list" id="act-2-fun"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="fun">+</button>
-                    </div>
-                    
-                    <!-- 游戏时间和中点之间 -->
-                    <div class="beat-slot flexible-area" data-act="2" data-beat="between-fun-midpoint">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-2-between-fun-midpoint"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="between-fun-midpoint">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="2" data-beat="midpoint">
-                        <h3>中点</h3>
-                        <div class="card-list" id="act-2-midpoint"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="midpoint">+</button>
-                    </div>
-                    
-                    <!-- 中点后区域 -->
-                    <div class="beat-slot flexible-area" data-act="2" data-beat="post-midpoint">
-                        <h3>后置区域</h3>
-                        <div class="card-list" id="act-2-post-midpoint"></div>
-                        <button class="add-card-btn" data-act="2" data-beat="post-midpoint">+</button>
-                    </div>
+                <input type="hidden" id="quick-add-status" value="confirmed">
+            </div>
+            
+            <div class="quick-add-section">
+                <label>场景位置：</label>
+                <div class="location-input">
+                    <select id="quick-add-location-type">
+                        <option value="INT">INT.</option>
+                        <option value="EXT">EXT.</option>
+                    </select>
+                    <input type="text" id="quick-add-location" placeholder="位置描述">
                 </div>
             </div>
-
-            <!-- 第三幕 -->
-            <div class="act-row">
-                <div class="act-header">
-                    <h2>第三幕</h2>
-                    <span class="card-count">0 张卡片</span>
-                </div>
-                <div class="beat-slots">
-                    <!-- 坏人逼近前区域 -->
-                    <div class="beat-slot flexible-area" data-act="3" data-beat="pre-villain">
-                        <h3>前置区域</h3>
-                        <div class="card-list" id="act-3-pre-villain"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="pre-villain">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="3" data-beat="villain">
-                        <h3>坏人逼近</h3>
-                        <div class="card-list" id="act-3-villain"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="villain">+</button>
-                    </div>
-                    
-                    <!-- 坏人逼近和灵魂黑夜之间 -->
-                    <div class="beat-slot flexible-area" data-act="3" data-beat="between-villain-darknight">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-3-between-villain-darknight"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="between-villain-darknight">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="3" data-beat="darknight">
-                        <h3>灵魂黑夜</h3>
-                        <div class="card-list" id="act-3-darknight"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="darknight">+</button>
-                    </div>
-                    
-                    <!-- 灵魂黑夜和一切尽失之间 -->
-                    <div class="beat-slot flexible-area" data-act="3" data-beat="between-darknight-allislost">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-3-between-darknight-allislost"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="between-darknight-allislost">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="3" data-beat="allislost">
-                        <h3>一切尽失</h3>
-                        <div class="card-list" id="act-3-allislost"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="allislost">+</button>
-                    </div>
-                    
-                    <!-- 一切尽失后区域 -->
-                    <div class="beat-slot flexible-area" data-act="3" data-beat="post-allislost">
-                        <h3>后置区域</h3>
-                        <div class="card-list" id="act-3-post-allislost"></div>
-                        <button class="add-card-btn" data-act="3" data-beat="post-allislost">+</button>
-                    </div>
-                </div>
+            
+            <div class="quick-add-section">
+                <label>场景描述：</label>
+                <textarea id="quick-add-description" placeholder="简短描述场景..."></textarea>
             </div>
-
-            <!-- 第四幕 -->
-            <div class="act-row">
-                <div class="act-header">
-                    <h2>第四幕</h2>
-                    <span class="card-count">0 张卡片</span>
-                </div>
-                <div class="beat-slots">
-                    <!-- 大结局准备前区域 -->
-                    <div class="beat-slot flexible-area" data-act="4" data-beat="pre-finaleprep">
-                        <h3>前置区域</h3>
-                        <div class="card-list" id="act-4-pre-finaleprep"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="pre-finaleprep">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="4" data-beat="finaleprep">
-                        <h3>大结局准备</h3>
-                        <div class="card-list" id="act-4-finaleprep"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="finaleprep">+</button>
-                    </div>
-                    
-                    <!-- 大结局准备和大结局之间 -->
-                    <div class="beat-slot flexible-area" data-act="4" data-beat="between-finaleprep-finale">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-4-between-finaleprep-finale"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="between-finaleprep-finale">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="4" data-beat="finale">
-                        <h3>大结局</h3>
-                        <div class="card-list" id="act-4-finale"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="finale">+</button>
-                    </div>
-                    
-                    <!-- 大结局和最终画面之间 -->
-                    <div class="beat-slot flexible-area" data-act="4" data-beat="between-finale-finalimage">
-                        <h3>过渡区域</h3>
-                        <div class="card-list" id="act-4-between-finale-finalimage"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="between-finale-finalimage">+</button>
-                    </div>
-                    
-                    <div class="beat-slot" data-act="4" data-beat="finalimage">
-                        <h3>最终画面</h3>
-                        <div class="card-list" id="act-4-finalimage"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="finalimage">+</button>
-                    </div>
-                    
-                    <!-- 最终画面后区域 -->
-                    <div class="beat-slot flexible-area" data-act="4" data-beat="post-finalimage">
-                        <h3>后置区域</h3>
-                        <div class="card-list" id="act-4-post-finalimage"></div>
-                        <button class="add-card-btn" data-act="4" data-beat="post-finalimage">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 创意桶 -->
-            <div class="act-row bucket-row">
-                <div class="act-header">
-                    <h2>创意桶</h2>
-                    <span class="card-count">0 张卡片</span>
-                </div>
-                <div class="beat-slots">
-                    <div class="beat-slot bucket" data-act="bucket" data-beat="ideas">
-                        <h3>随机想法</h3>
-                        <div class="card-list" id="bucket-ideas"></div>
-                        <button class="add-card-btn" data-act="bucket" data-beat="ideas">+</button>
-                    </div>
-                </div>
+            
+            <div class="quick-add-actions">
+                <button id="quick-add-save">添加卡片</button>
+                <button id="quick-add-save-and-new">添加并创建新卡片</button>
             </div>
         </div>
     </div>
@@ -295,15 +110,11 @@
                 <input type="hidden" id="card-beat">
                 
                 <div class="form-group">
-                    <label>卡片类型:</label>
-                    <select id="card-type">
-                        <option value="regular">普通场景</option>
-                        <option value="single-beat">单场景节拍</option>
-                        <option value="setup">铺垫</option>
-                        <option value="fun-games">游戏时间</option>
-                        <option value="villain">坏人逼近</option>
-                        <option value="dark-night">灵魂黑夜</option>
-                        <option value="finale">结局</option>
+                    <label>卡片标记:</label>
+                    <select id="card-status">
+                        <option value="confirmed">确认</option>
+                        <option value="pending">保留</option>
+                        <option value="question">存疑</option>
                     </select>
                 </div>
                 
@@ -318,23 +129,27 @@
                 
                 <div class="form-group">
                     <label>场景描述:</label>
-                    <textarea id="scene-description" maxlength="200" placeholder="简短描述场景发生的事情"></textarea>
-                    <small>保持简短，不超过2-3句话</small>
+                    <textarea id="scene-description" placeholder="简短描述场景发生的事情，不要超过2-3句话"></textarea>
                 </div>
                 
                 <div class="form-group">
                     <label>冲突:</label>
-                    <input type="text" id="protagonist" placeholder="主人公">
-                    <input type="text" id="goal" placeholder="目标">
-                    <input type="text" id="obstacle" placeholder="障碍">
+                    <div class="conflict-inputs">
+                        <input type="text" id="protagonist" placeholder="主人公">
+                        <input type="text" id="goal" placeholder="目标">
+                        <input type="text" id="obstacle" placeholder="障碍">
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label>情感变化:</label>
-                    <select id="emotional-change">
-                        <option value="positive">正向 (+)</option>
-                        <option value="negative">负向 (-)</option>
-                    </select>
+                    <div class="emotional-change-inputs">
+                        <select id="emotional-change-type">
+                            <option value="positive">正向 (+)</option>
+                            <option value="negative">负向 (-)</option>
+                        </select>
+                        <input type="text" id="emotional-change-content" placeholder="描述情感变化的具体内容">
+                    </div>
                 </div>
                 
                 <div class="form-actions">
@@ -391,11 +206,33 @@
         </div>
     </div>
     
-    <footer>
-        <button id="show-stats">显示统计</button>
-        <button id="export-project">导出项目</button>
-        <button id="export-outline">导出大纲</button>
-    </footer>
+    <!-- 反馈模态框 -->
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>反馈与建议</h2>
+            <form id="feedback-form">
+                <div class="form-group">
+                    <label>您的电子邮箱 (选填):</label>
+                    <input type="email" id="feedback-email" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label>反馈内容:</label>
+                    <textarea id="feedback-content" placeholder="请输入您的反馈或建议..." required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">提交反馈</button>
+                    <button type="button" class="close-modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 自动保存提示 -->
+    <div id="autosave-indicator" class="autosave-indicator">已自动保存</div>
+    
+    <!-- 提示消息 -->
+    <div id="toast-container"></div>
     
     <script src="script.js"></script>
 </body>

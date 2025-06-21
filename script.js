@@ -2,65 +2,168 @@
 let scriptCards = {
     project: {
         title: '未命名剧本',
+        type: 'tv-hour', // 默认为一小时剧集
         lastSaved: new Date().toISOString()
     },
-    acts: {
-        // 按幕和节拍组织数据
-        1: {
-            'pre-opening': [],
-            'opening': [],
-            'between-opening-theme': [],
-            'theme': [],
-            'between-theme-setup': [],
-            'setup': [],
-            'between-setup-catalyst': [],
-            'catalyst': [],
-            'between-catalyst-debate': [],
-            'debate': [],
-            'post-debate': []
-        },
-        2: {
-            'pre-bstory': [],
-            'bstory': [],
-            'between-bstory-fun': [],
-            'fun': [],
-            'between-fun-midpoint': [],
-            'midpoint': [],
-            'post-midpoint': []
-        },
-        3: {
-            'pre-villain': [],
-            'villain': [],
-            'between-villain-darknight': [],
-            'darknight': [],
-            'between-darknight-allislost': [],
-            'allislost': [],
-            'post-allislost': []
-        },
-        4: {
-            'pre-finaleprep': [],
-            'finaleprep': [],
-            'between-finaleprep-finale': [],
-            'finale': [],
-            'between-finale-finalimage': [],
-            'finalimage': [],
-            'post-finalimage': []
-        },
-        bucket: {
-            ideas: []
+    acts: {}
+};
+
+// 常量和配置
+const APP_VERSION = '1.0.0';
+const AUTO_SAVE_INTERVAL = 60000; // 自动保存间隔，单位毫秒（1分钟）
+let autoSaveTimer = null;
+let lastAutoSaveTime = 0;
+
+// 节拍提示文本
+const beatHints = {
+    'opening': '故事开始于一个有震撼力、意境或者吸引人的画面，奠定全片的整体基调。',
+    'theme': '在开场不久的一场对话或动作，暗示了全片的主题。',
+    'setup': '铺垫部分必须点出主人公的欲望，只有认清人物的欲望，才能形成后续的戏剧张力。',
+    'catalyst': '推动是被动的（一个电话，一个邮件，床下的尸体，捉奸在床）。',
+    'debate': '主人公发生的行为和反馈，让他开始犹豫和思考，到底哪一个才是更好的道路？',
+    'act2-tp': '第二幕转折点必须是主动坚决的（主人公主动行为，走向没法回头的道路）。',
+    'fun': '游戏时间是要比拼想象力的，必须要新颖好玩酷炫，展现全片最轻松/好玩/酷炫/悬疑/大场面的段落。',
+    'bstory': 'B故事呼应的是主角的内心/情感/人物关系的额外展现。',
+    'midpoint': '此时发生的一个事件，气氛骤然紧张起来，故事回到了正题。',
+    'villain': '坏蛋逼近必须要展现主人公的不断努力，然而魔高一丈，必须是对抗，形成张力。',
+    'allislost': '最终主人公所有努力都失败了，他陷入了绝望。',
+    'darknight': '灵魂黑夜与一无所有是主角情感最低点，展现绝望和内心挣扎。',
+    'act3-tp': '第三幕转折点的反转，要从B故事里面不经意提到线索找到伏笔，这样反转才有力量。',
+    'finale': '高明的结局，必须呼应到主题的呈现以及争论。如果主人公的行为没有代价，那么这个行为就没有戏剧意义。',
+    'finalimage': '故事结束于一个有震撼力、意境或者吸引人的画面，并与开场画面呼应。'
+};
+
+// 不同剧本类型的结构定义
+const scriptStructures = {
+    'movie': {
+        // 电影结构：三幕
+        acts: {
+            1: {
+                title: '第一幕',
+                beats: [
+                    { id: 'opening', title: '开场画面', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'theme', title: '主题呈现', recommended: '1个卡片', type: 'setup' },
+                    { id: 'setup', title: '铺垫', recommended: '3-5个卡片', type: 'setup' },
+                    { id: 'catalyst', title: '催化剂', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'debate', title: '争论', recommended: '2-4个卡片', type: 'regular' }
+                ]
+            },
+            2: {
+                title: '第二幕（上）',
+                beats: [
+                    { id: 'act2-tp', title: '第二幕转折点', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'fun', title: '游戏时间', recommended: '4-6个卡片', type: 'fun-games' },
+                    { id: 'bstory', title: 'B故事', recommended: '3-5个卡片', type: 'regular' },
+                    { id: 'midpoint', title: '中点', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            3: {
+                title: '第二幕（下）',
+                beats: [
+                    { id: 'villain', title: '坏蛋逼近', recommended: '4-6个卡片', type: 'villain' },
+                    { id: 'allislost', title: '一无所有', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'darknight', title: '灵魂黑夜', recommended: '2-3个卡片', type: 'dark-night' }
+                ]
+            },
+            4: {
+                title: '第三幕',
+                beats: [
+                    { id: 'act3-tp', title: '第三幕转折点', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'finale', title: '结局', recommended: '3-5个卡片', type: 'finale' },
+                    { id: 'finalimage', title: '终场画面', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            }
+        }
+    },
+    'tv-hour': {
+        // 一小时剧集结构：四幕
+        acts: {
+            1: {
+                title: '第一幕',
+                beats: [
+                    { id: 'opening', title: '开场画面', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'theme', title: '主题呈现', recommended: '1个卡片', type: 'setup' },
+                    { id: 'setup', title: '铺垫', recommended: '1-4个卡片', type: 'setup' },
+                    { id: 'catalyst', title: '推动', recommended: '1-2个卡片', type: 'single-beat' },
+                    { id: 'debate', title: '争论', recommended: '1-4个卡片', type: 'regular' },
+                    { id: 'act2-tp', title: '第二幕转折点', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            2: {
+                title: '第二幕',
+                beats: [
+                    { id: 'fun', title: '游戏时间', recommended: '2-3个卡片', type: 'fun-games' },
+                    { id: 'bstory', title: 'B故事', recommended: '1-3个卡片', type: 'regular' },
+                    { id: 'midpoint', title: '中点', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            3: {
+                title: '第三幕',
+                beats: [
+                    { id: 'villain', title: '坏蛋逼近', recommended: '3-6个卡片', type: 'villain' },
+                    { id: 'allislost', title: '一无所有', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'darknight', title: '灵魂黑夜', recommended: '1-4个卡片', type: 'dark-night' },
+                    { id: 'act3-tp', title: '第三幕转折点', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            4: {
+                title: '第四幕',
+                beats: [
+                    { id: 'finale', title: '结局', recommended: '2-6个卡片', type: 'finale' },
+                    { id: 'finalimage', title: '终场画面', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            }
+        }
+    },
+    'tv-half': {
+        // 半小时喜剧结构：三幕
+        acts: {
+            1: {
+                title: '第一幕',
+                beats: [
+                    { id: 'opening', title: '开场画面', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'theme', title: '主题呈现', recommended: '1个卡片', type: 'setup' },
+                    { id: 'setup', title: '铺垫', recommended: '1个卡片', type: 'setup' },
+                    { id: 'catalyst', title: '推动', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'debate', title: '争论', recommended: '1个卡片', type: 'regular' },
+                    { id: 'act2-tp', title: '第二幕转折点', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            2: {
+                title: '第二幕',
+                beats: [
+                    { id: 'fun', title: '游戏时间', recommended: '1个卡片', type: 'fun-games' },
+                    { id: 'bstory', title: 'B故事', recommended: '1个卡片', type: 'regular' },
+                    { id: 'midpoint', title: '中点', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'villain', title: '坏蛋逼近', recommended: '1个卡片', type: 'villain' },
+                    { id: 'allislost', title: '一无所有', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            },
+            3: {
+                title: '第三幕',
+                beats: [
+                    { id: 'darknight', title: '灵魂黑夜', recommended: '1个卡片', type: 'dark-night' },
+                    { id: 'act3-tp', title: '第三幕转折点', recommended: '1个卡片', type: 'single-beat' },
+                    { id: 'finale', title: '结局', recommended: '2个卡片', type: 'finale' },
+                    { id: 'finalimage', title: '终场画面', recommended: '1个卡片', type: 'single-beat' }
+                ]
+            }
         }
     }
 };
 
 // DOM元素引用
 const scriptBoard = document.getElementById('script-board');
+const scriptTypeSelector = document.getElementById('script-type');
 const cardModal = document.getElementById('card-modal');
 const statsModal = document.getElementById('stats-modal');
 const filenameModal = document.getElementById('filename-modal');
 const importModal = document.getElementById('import-modal');
+const feedbackModal = document.getElementById('feedback-modal');
 const cardForm = document.getElementById('card-form');
 const filenameForm = document.getElementById('filename-form');
 const importForm = document.getElementById('import-form');
+const feedbackForm = document.getElementById('feedback-form');
 const projectTitle = document.getElementById('project-title');
 
 // Sortable实例集合
@@ -70,6 +173,12 @@ const sortableInstances = [];
 function initApp() {
     // 尝试从本地存储加载数据
     loadFromLocalStorage();
+    
+    // 设置项目类型选择器的值
+    scriptTypeSelector.value = scriptCards.project.type;
+    
+    // 生成剧本结构
+    generateScriptStructure();
     
     // 更新UI
     renderAllCards();
@@ -81,8 +190,101 @@ function initApp() {
     // 添加事件监听器
     setupEventListeners();
     
-    // 初始化拖拽
-    initSortable();
+    // 检查节拍槽状态
+    updateBeatSlotStatus();
+    
+    // 初始化快速添加功能
+    initQuickAdd();
+    
+    // 添加iPad触控优化
+    initTouchOptimizations();
+    
+    // 初始化自动保存
+    initAutoSave();
+    
+    // 初始化反馈功能
+    initFeedback();
+}
+
+// 初始化自动保存功能
+function initAutoSave() {
+    // 清除之前的定时器
+    if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+    }
+    
+    // 设置新的定时器
+    autoSaveTimer = setInterval(function() {
+        // 只在数据有变化时保存
+        if (scriptCards.project.lastSaved !== lastAutoSaveTime) {
+            saveToLocalStorage();
+            lastAutoSaveTime = scriptCards.project.lastSaved;
+            showAutoSaveIndicator();
+        }
+    }, AUTO_SAVE_INTERVAL);
+    
+    // 监听页面卸载事件，确保保存最新数据
+    window.addEventListener('beforeunload', function() {
+        saveToLocalStorage();
+    });
+}
+
+// 显示自动保存指示器
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('autosave-indicator');
+    if (!indicator) return;
+    
+    indicator.classList.add('show');
+    
+    // 3秒后隐藏
+    setTimeout(function() {
+        indicator.classList.remove('show');
+    }, 3000);
+}
+
+// 初始化反馈功能
+function initFeedback() {
+    const feedbackBtn = document.getElementById('feedback-btn');
+    const feedbackModal = document.getElementById('feedback-modal');
+    
+    if (!feedbackBtn || !feedbackModal) {
+        console.error('反馈按钮或模态框未找到');
+        return;
+    }
+    
+    // 显示反馈模态框
+    feedbackBtn.addEventListener('click', function() {
+        console.log('反馈按钮被点击');
+        feedbackModal.style.display = 'block';
+    });
+    
+    // 提交反馈
+    if (feedbackForm) {
+        feedbackForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('feedback-email').value;
+            const content = document.getElementById('feedback-content').value;
+            
+            // 这里可以添加发送反馈到服务器的代码
+            // 示例：通过邮件链接发送
+            const subject = encodeURIComponent('编剧卡片系统反馈');
+            const body = encodeURIComponent(
+                `版本: ${APP_VERSION}\n` +
+                `反馈内容: ${content}\n` +
+                `联系邮箱: ${email || '未提供'}`
+            );
+            
+            window.open(`mailto:your-support-email@example.com?subject=${subject}&body=${body}`);
+            
+            // 重置表单并关闭模态框
+            feedbackForm.reset();
+            feedbackModal.style.display = 'none';
+            
+            // 显示成功消息
+            showToast('感谢您的反馈！');
+        });
+    }
 }
 
 // 从本地存储加载数据
@@ -92,48 +294,140 @@ function loadFromLocalStorage() {
         try {
             scriptCards = JSON.parse(savedData);
             
-            // 确保所有新添加的节拍数据结构存在
+            // 确保类型属性存在
+            if (!scriptCards.project.type) {
+                scriptCards.project.type = 'tv-hour';
+            }
+            
+            // 确保数据结构完整
             ensureDataStructure();
+            
+            // 迁移旧的卡片状态字段
+            migrateCardStatus();
         } catch (e) {
             console.error('加载数据出错:', e);
         }
+    } else {
+        // 初始化空的剧本结构
+        initEmptyScriptStructure();
+    }
+}
+
+// 迁移旧的卡片类型到新的卡片标记
+function migrateCardStatus() {
+    for (const actId in scriptCards.acts) {
+        for (const beatId in scriptCards.acts[actId]) {
+            const cards = scriptCards.acts[actId][beatId];
+            if (cards && Array.isArray(cards)) {
+                cards.forEach(card => {
+                    // 如果没有status字段，根据旧的type字段设置默认值
+                    if (!card.status) {
+                        card.status = 'confirmed'; // 默认为"确认"
+                    }
+                    
+                    // 确保有emotionalChangeContent字段
+                    if (!card.emotionalChangeContent) {
+                        card.emotionalChangeContent = '';
+                    }
+                });
+            }
+        }
+    }
+}
+
+// 初始化空的剧本结构
+function initEmptyScriptStructure() {
+    const type = scriptCards.project.type;
+    scriptCards.acts = {};
+    
+    // 为每一幕创建空的节拍容器
+    const structure = scriptStructures[type];
+    for (const actId in structure.acts) {
+        scriptCards.acts[actId] = {};
+        
+        // 为每个节拍创建空数组
+        structure.acts[actId].beats.forEach(beat => {
+            scriptCards.acts[actId][beat.id] = [];
+        });
+    }
+    
+    // 创建创意桶
+    if (!scriptCards.acts.bucket) {
+        scriptCards.acts.bucket = { ideas: [] };
     }
 }
 
 // 确保数据结构完整
 function ensureDataStructure() {
-    const acts = {
-        1: [
-            'pre-opening', 'opening', 'between-opening-theme', 'theme', 
-            'between-theme-setup', 'setup', 'between-setup-catalyst', 'catalyst', 
-            'between-catalyst-debate', 'debate', 'post-debate'
-        ],
-        2: [
-            'pre-bstory', 'bstory', 'between-bstory-fun', 'fun', 
-            'between-fun-midpoint', 'midpoint', 'post-midpoint'
-        ],
-        3: [
-            'pre-villain', 'villain', 'between-villain-darknight', 'darknight', 
-            'between-darknight-allislost', 'allislost', 'post-allislost'
-        ],
-        4: [
-            'pre-finaleprep', 'finaleprep', 'between-finaleprep-finale', 'finale', 
-            'between-finale-finalimage', 'finalimage', 'post-finalimage'
-        ],
-        bucket: ['ideas']
-    };
+    const type = scriptCards.project.type;
     
-    for (const act in acts) {
-        if (!scriptCards.acts[act]) {
-            scriptCards.acts[act] = {};
+    // 为新的剧本类型初始化结构
+    if (!scriptCards.acts) {
+        scriptCards.acts = {};
+    }
+    
+    // 确保bucket存在
+    if (!scriptCards.acts.bucket) {
+        scriptCards.acts.bucket = { ideas: [] };
+    }
+    
+    // 为每一幕和节拍确保数据结构存在
+    const structure = scriptStructures[type];
+    for (const actId in structure.acts) {
+        if (!scriptCards.acts[actId]) {
+            scriptCards.acts[actId] = {};
         }
         
-        for (const beat of acts[act]) {
-            if (!scriptCards.acts[act][beat]) {
-                scriptCards.acts[act][beat] = [];
+        // 为每个节拍创建数组（如果不存在）
+        structure.acts[actId].beats.forEach(beat => {
+            if (!scriptCards.acts[actId][beat.id]) {
+                scriptCards.acts[actId][beat.id] = [];
             }
-        }
+        });
     }
+}
+
+// 生成剧本结构HTML
+function generateScriptStructure() {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    let html = '';
+    
+    // 为每一幕生成HTML
+    for (const actId in structure.acts) {
+        const act = structure.acts[actId];
+        
+        html += `
+        <div class="act-row" data-act="${actId}">
+            <div class="act-header">
+                <h2>${act.title}</h2>
+                <span class="card-count">0 张卡片</span>
+            </div>
+            <div class="beat-slots">
+        `;
+        
+        // 为每个节拍生成HTML
+        act.beats.forEach(beat => {
+            html += `
+                <div class="beat-slot" data-act="${actId}" data-beat="${beat.id}">
+                    <h3>${beat.title}</h3>
+                    <div class="beat-recommended">${beat.recommended}</div>
+                    <div class="beat-hint">${beatHints[beat.id] || ''}</div>
+                    <div class="card-list" id="act-${actId}-${beat.id}"></div>
+                    <button class="add-card-btn" data-act="${actId}" data-beat="${beat.id}">+</button>
+                </div>
+            `;
+        });
+        
+        html += `
+            </div>
+        </div>
+        `;
+    }
+    
+    // 更新脚本板
+    scriptBoard.innerHTML = html;
 }
 
 // 保存到本地存储
@@ -144,6 +438,15 @@ function saveToLocalStorage() {
 
 // 设置事件监听器
 function setupEventListeners() {
+    // 剧本类型选择器
+    scriptTypeSelector.addEventListener('change', function() {
+        if (confirm('切换剧本类型将会清空当前卡片内容，确定要继续吗？')) {
+            changeScriptType(this.value);
+        } else {
+            this.value = scriptCards.project.type; // 恢复之前的选择
+        }
+    });
+    
     // 添加卡片按钮
     document.querySelectorAll('.add-card-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -198,10 +501,26 @@ function setupEventListeners() {
                 try {
                     const data = JSON.parse(e.target.result);
                     scriptCards = data;
+                    
+                    // 确保类型属性存在
+                    if (!scriptCards.project.type) {
+                        scriptCards.project.type = 'tv-hour';
+                    }
+                    
+                    // 更新类型选择器
+                    scriptTypeSelector.value = scriptCards.project.type;
+                    
+                    // 迁移旧的卡片类型
+                    migrateCardStatus();
+                    
+                    // 重新生成结构并确保数据完整
+                    generateScriptStructure();
                     ensureDataStructure();
+                    
                     projectTitle.value = scriptCards.project.title;
                     renderAllCards();
                     updateCardCounts();
+                    updateBeatSlotStatus();
                     importModal.style.display = 'none';
                     alert('项目已导入!');
                 } catch (error) {
@@ -221,6 +540,7 @@ function setupEventListeners() {
             statsModal.style.display = 'none';
             filenameModal.style.display = 'none';
             importModal.style.display = 'none';
+            if (feedbackModal) feedbackModal.style.display = 'none';
         });
     });
     
@@ -239,9 +559,6 @@ function setupEventListeners() {
     // 显示统计按钮
     document.getElementById('show-stats').addEventListener('click', showStats);
     
-    // 导出项目按钮
-    document.getElementById('export-project').addEventListener('click', exportProject);
-    
     // 导出大纲按钮
     document.getElementById('export-outline').addEventListener('click', exportOutline);
     
@@ -251,7 +568,245 @@ function setupEventListeners() {
         if (e.target === statsModal) statsModal.style.display = 'none';
         if (e.target === filenameModal) filenameModal.style.display = 'none';
         if (e.target === importModal) importModal.style.display = 'none';
+        if (feedbackModal && e.target === feedbackModal) feedbackModal.style.display = 'none';
     });
+    
+    // 视图筛选按钮
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // 移除所有按钮的active类
+            document.querySelectorAll('.view-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // 添加当前按钮的active类
+            this.classList.add('active');
+            
+            // 获取视图ID
+            const viewId = this.id;
+            
+            // 切换视图
+            filterView(viewId);
+        });
+    });
+}
+
+// 初始化快速添加卡片功能
+function initQuickAdd() {
+    const quickAddBtn = document.getElementById('quick-add-btn');
+    const quickAddMenu = document.getElementById('quick-add-menu');
+    
+    if (!quickAddBtn || !quickAddMenu) return;
+    
+    const closeBtn = quickAddMenu.querySelector('.close-quick-add');
+    
+    // 打开快速添加菜单
+    quickAddBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        // 生成幕和节拍选择器
+        generateActBeatSelectors();
+        quickAddMenu.style.display = 'block';
+        
+        // 初始化状态选择器
+        initStatusOptions();
+    });
+    
+    // 关闭菜单按钮
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            quickAddMenu.style.display = 'none';
+        });
+    }
+    
+    // 点击其他区域关闭菜单
+    document.addEventListener('click', function(e) {
+        if (quickAddMenu.style.display === 'block' && 
+            !quickAddMenu.contains(e.target) && 
+            e.target !== quickAddBtn) {
+            quickAddMenu.style.display = 'none';
+        }
+    });
+    
+    // 防止菜单内点击事件冒泡到文档
+    quickAddMenu.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    // 添加卡片按钮
+    const addCardBtn = document.getElementById('quick-add-save');
+    if (addCardBtn) {
+        addCardBtn.addEventListener('click', function() {
+            saveQuickCard(false);
+        });
+    }
+    
+    // 添加并创建新卡片按钮
+    const addAndNewBtn = document.getElementById('quick-add-save-and-new');
+    if (addAndNewBtn) {
+        addAndNewBtn.addEventListener('click', function() {
+            saveQuickCard(true);
+        });
+    }
+}
+
+// 初始化状态选项
+function initStatusOptions() {
+    const statusOptions = document.querySelectorAll('.status-option');
+    const statusInput = document.getElementById('quick-add-status');
+    
+    if (!statusOptions.length || !statusInput) return;
+    
+    // 清除所有选中状态
+    statusOptions.forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // 默认选中第一个选项
+    statusOptions[0].classList.add('selected');
+    statusInput.value = statusOptions[0].getAttribute('data-status');
+    
+    // 添加点击事件
+    statusOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // 更新选中状态
+            statusOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // 更新隐藏输入值
+            statusInput.value = this.getAttribute('data-status');
+        });
+    });
+}
+
+// iPad触控优化
+function initTouchOptimizations() {
+    // 检测是否是触控设备
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isTouchDevice) {
+        document.body.classList.add('touch-device');
+        
+        // 增强触控区域
+        const clickableElements = document.querySelectorAll('button, .card, .beat-slot h3');
+        clickableElements.forEach(el => {
+            el.classList.add('touch-enhanced');
+        });
+        
+        // 添加手势支持
+        if (window.GestureEvent) { // 仅在支持手势的设备上启用
+            enablePinchZoom();
+        }
+    }
+}
+
+// 启用捏合缩放（用于iPad查看大量卡片）
+function enablePinchZoom() {
+    const board = document.getElementById('script-board');
+    if (!board) return;
+    
+    let initialScale = 1;
+    let currentScale = 1;
+    
+    // 处理手势事件
+    board.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+        initialScale = currentScale;
+    });
+    
+    board.addEventListener('gesturechange', function(e) {
+        e.preventDefault();
+        currentScale = Math.min(Math.max(initialScale * e.scale, 0.5), 2);
+        board.style.transform = `scale(${currentScale})`;
+    });
+    
+    board.addEventListener('gestureend', function(e) {
+        e.preventDefault();
+        // 可以添加回弹动画
+    });
+}
+
+// 筛选视图
+function filterView(viewId) {
+    const board = document.getElementById('script-board');
+    const actRows = document.querySelectorAll('.act-row');
+    
+    if (viewId === 'view-all') {
+        // 显示所有幕
+        board.classList.remove('filtered-view');
+        actRows.forEach(row => {
+            row.classList.remove('hidden');
+        });
+    } else {
+        // 添加筛选视图类
+        board.classList.add('filtered-view');
+        
+        // 确定要显示的幕
+        let actToShow;
+        
+        if (viewId === 'view-bucket') {
+            actToShow = 'bucket';
+        } else {
+            const actNumber = viewId.split('-')[2];
+            actToShow = actNumber;
+        }
+        
+        // 隐藏所有幕
+        actRows.forEach(row => {
+            row.classList.add('hidden');
+        });
+        
+        // 显示指定的幕
+        const targetRow = document.querySelector(`.act-row[data-act="${actToShow}"]`);
+        if (targetRow) {
+            targetRow.classList.remove('hidden');
+        }
+    }
+    
+    // 重新初始化拖拽
+    setTimeout(initSortable, 100);
+}
+
+// 更新节拍槽状态
+function updateBeatSlotStatus() {
+    const beatSlots = document.querySelectorAll('.beat-slot');
+    
+    beatSlots.forEach(slot => {
+        const act = slot.getAttribute('data-act');
+        const beat = slot.getAttribute('data-beat');
+        
+        // 检查该节拍是否有卡片
+        if (scriptCards.acts[act] && 
+            scriptCards.acts[act][beat] && 
+            scriptCards.acts[act][beat].length > 0) {
+            slot.classList.add('has-cards');
+        } else {
+            slot.classList.remove('has-cards');
+        }
+    });
+}
+
+// 切换剧本类型
+function changeScriptType(newType) {
+    // 更新剧本类型
+    scriptCards.project.type = newType;
+    
+    // 重置卡片数据
+    initEmptyScriptStructure();
+    
+    // 重新生成结构
+    generateScriptStructure();
+    
+    // 重新渲染
+    renderAllCards();
+    updateCardCounts();
+    updateBeatSlotStatus();
+    
+    // 保存到本地
+    saveToLocalStorage();
+    
+    // 重新初始化拖拽
+    initSortable();
 }
 
 // 显示文件名输入模态框
@@ -296,18 +851,24 @@ function initSortable() {
     
     // 对每个容器初始化Sortable
     cardLists.forEach(list => {
+        // 如果是展开状态，跳过（由专门的函数处理）
+        if (list.hasAttribute('data-expanded')) return;
+        
         const act = list.closest('.beat-slot').getAttribute('data-act');
         const beat = list.closest('.beat-slot').getAttribute('data-beat');
         
         const sortable = new Sortable(list, {
-            group: 'cards',  // 指定组，允许在不同列表之间拖拽
-            animation: 150,  // 动画时间
-            ghostClass: 'sortable-ghost',  // 拖动时的样式
-            chosenClass: 'sortable-chosen',  // 选中时的样式
-            dragClass: 'sortable-drag',  // 拖动中的样式
+            group: 'cards',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            filter: '.card-stack', // 忽略堆叠容器（需单独处理）
             
-            // 当卡片放置在新位置时触发
             onEnd: function(evt) {
+                // 如果拖动的是卡片堆叠，忽略
+                if (evt.item.classList.contains('card-stack')) return;
+                
                 const cardId = evt.item.getAttribute('data-id');
                 const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
                 const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
@@ -335,8 +896,15 @@ function initSortable() {
                 // 保存更改
                 saveToLocalStorage();
                 
-                // 更新计数
+                // 更新UI
                 updateCardCounts();
+                updateBeatSlotStatus();
+                
+                // 重新渲染来源和目标节拍的卡片
+                renderActBeatCards(fromAct, fromBeat);
+                if (fromAct !== toAct || fromBeat !== toBeat) {
+                    renderActBeatCards(toAct, toBeat);
+                }
             }
         });
         
@@ -350,8 +918,10 @@ function getAllSavedProjects() {
     const projects = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('scriptCards_')) {
-            projects.push(key.replace('scriptCards_', ''));
+        // 检查两种可能的前缀
+        if (key === 'scriptCards' || key.startsWith('scriptCards_')) {
+            const projectName = key === 'scriptCards' ? '默认项目' : key.replace('scriptCards_', '');
+            projects.push(projectName);
         }
     }
     return projects;
@@ -359,14 +929,33 @@ function getAllSavedProjects() {
 
 // 加载项目
 function loadProject(name) {
-    const data = localStorage.getItem('scriptCards_' + name);
+    // 处理默认项目情况
+    const storageKey = name === '默认项目' ? 'scriptCards' : 'scriptCards_' + name;
+    const data = localStorage.getItem(storageKey);
+    
     if (data) {
         try {
             scriptCards = JSON.parse(data);
+            
+            // 确保类型属性存在
+            if (!scriptCards.project.type) {
+                scriptCards.project.type = 'tv-hour';
+            }
+            
+            // 更新类型选择器
+            scriptTypeSelector.value = scriptCards.project.type;
+            
+            // 迁移旧的卡片类型
+            migrateCardStatus();
+            
+            // 重新生成结构并确保数据完整
+            generateScriptStructure();
             ensureDataStructure();
+            
             projectTitle.value = scriptCards.project.title;
             renderAllCards();
             updateCardCounts();
+            updateBeatSlotStatus();
             alert('项目已加载!');
         } catch (e) {
             console.error('加载项目出错:', e);
@@ -388,36 +977,24 @@ function openCardModal(cardId, act, beat) {
         const card = findCardById(cardId, act, beat);
         if (card) {
             document.getElementById('card-id').value = card.id;
-            document.getElementById('card-type').value = card.type || 'regular';
+            document.getElementById('card-status').value = card.status || 'confirmed';
             document.getElementById('scene-location-type').value = card.location.type;
             document.getElementById('scene-location').value = card.location.place;
             document.getElementById('scene-description').value = card.description;
             document.getElementById('protagonist').value = card.conflict.protagonist;
             document.getElementById('goal').value = card.conflict.goal;
             document.getElementById('obstacle').value = card.conflict.obstacle;
-            document.getElementById('emotional-change').value = card.emotionalChange;
+            document.getElementById('emotional-change-type').value = card.emotionalChange;
+            document.getElementById('emotional-change-content').value = card.emotionalChangeContent || '';
         }
     } else {
         // 新卡片
         document.getElementById('card-id').value = generateId();
+        document.getElementById('card-status').value = 'confirmed'; // 默认为确认
         
-        // 根据节拍自动设置卡片类型
-        const beatToTypeMap = {
-            'opening': 'single-beat',
-            'theme': 'setup', 
-            'catalyst': 'single-beat',
-            'midpoint': 'single-beat',
-            'allislost': 'single-beat',
-            'finale': 'finale',
-            'finalimage': 'single-beat',
-            'setup': 'setup',
-            'fun': 'fun-games',
-            'villain': 'villain',
-            'darknight': 'dark-night'
-        };
-        
-        if (beatToTypeMap[beat]) {
-            document.getElementById('card-type').value = beatToTypeMap[beat];
+        // 如果是从特定节拍添加，填充相应的提示文本
+        if (beat && beatHints[beat]) {
+            document.getElementById('scene-description').placeholder = beatHints[beat];
         }
     }
     
@@ -434,6 +1011,154 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
+// 生成幕和节拍选择器
+function generateActBeatSelectors() {
+    const selectorContainer = document.querySelector('.act-beat-selector');
+    if (!selectorContainer) return;
+    
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 清空现有选择器
+    selectorContainer.innerHTML = '';
+    
+    // 创建幕选择器
+    const actSelector = document.createElement('select');
+    actSelector.className = 'act-selector';
+    actSelector.id = 'quick-add-act';
+    
+    // 添加幕选项
+    for (const actId in structure.acts) {
+        const option = document.createElement('option');
+        option.value = actId;
+        option.textContent = structure.acts[actId].title;
+        actSelector.appendChild(option);
+    }
+    
+    // 创建节拍选择器
+    const beatSelector = document.createElement('select');
+    beatSelector.className = 'beat-selector';
+    beatSelector.id = 'quick-add-beat';
+    
+    // 初始化节拍选项
+    updateBeatOptions(actSelector.value);
+    
+    // 幕变化时更新节拍
+    actSelector.addEventListener('change', function() {
+        updateBeatOptions(this.value);
+    });
+    
+    // 添加到容器
+    selectorContainer.appendChild(actSelector);
+    selectorContainer.appendChild(beatSelector);
+    
+    // 更新节拍选项的函数
+    function updateBeatOptions(actId) {
+        beatSelector.innerHTML = '';
+        
+        if (structure.acts[actId]) {
+            structure.acts[actId].beats.forEach(beat => {
+                const option = document.createElement('option');
+                option.value = beat.id;
+                option.textContent = beat.title;
+                beatSelector.appendChild(option);
+            });
+        }
+    }
+}
+
+// 保存快速创建的卡片
+function saveQuickCard(createNew) {
+    const actSelector = document.getElementById('quick-add-act');
+    const beatSelector = document.getElementById('quick-add-beat');
+    const statusSelector = document.getElementById('quick-add-status');
+    const locationTypeSelector = document.getElementById('quick-add-location-type');
+    const locationInput = document.getElementById('quick-add-location');
+    const descriptionInput = document.getElementById('quick-add-description');
+    
+    if (!actSelector || !beatSelector || !statusSelector || !locationTypeSelector || !locationInput || !descriptionInput) {
+        alert('快速添加功能初始化失败');
+        return;
+    }
+    
+    const act = actSelector.value;
+    const beat = beatSelector.value;
+    const status = statusSelector.value;
+    const locationType = locationTypeSelector.value;
+    const location = locationInput.value;
+    const description = descriptionInput.value;
+    
+    // 基本验证
+    if (!location || !description) {
+        alert('请填写位置和描述');
+        return;
+    }
+    
+    // 创建卡片对象
+    const card = {
+        id: generateId(),
+        status: status,
+        location: {
+            type: locationType,
+            place: location
+        },
+        description: description,
+        conflict: {
+            protagonist: '',
+            goal: '',
+            obstacle: ''
+        },
+        emotionalChange: 'positive',
+        emotionalChangeContent: '',
+        createdAt: new Date().toISOString()
+    };
+    
+    // 添加到数据中
+    scriptCards.acts[act][beat].push(card);
+    
+    // 保存并更新UI
+    saveToLocalStorage();
+    renderActBeatCards(act, beat);
+    updateCardCounts();
+    updateBeatSlotStatus();
+    
+    if (createNew) {
+        // 只清空位置和描述，保留其他字段
+        locationInput.value = '';
+        descriptionInput.value = '';
+        locationInput.focus();
+    } else {
+        // 关闭菜单
+        document.getElementById('quick-add-menu').style.display = 'none';
+    }
+    
+    // 提示用户
+    const actionText = createNew ? '已添加卡片，可继续创建' : '已添加卡片';
+    showToast(actionText);
+}
+
+// 显示简短的提示消息
+function showToast(message) {
+    const toastContainer = document.getElementById('toast-container') || document.body;
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+    
+    // 动画显示
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    // 自动消失
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toastContainer.removeChild(toast);
+        }, 300);
+    }, 2000);
+}
+
 // 保存卡片
 function saveCard() {
     const id = document.getElementById('card-id').value;
@@ -442,7 +1167,7 @@ function saveCard() {
     
     const card = {
         id: id,
-        type: document.getElementById('card-type').value,
+        status: document.getElementById('card-status').value,
         location: {
             type: document.getElementById('scene-location-type').value,
             place: document.getElementById('scene-location').value
@@ -453,7 +1178,8 @@ function saveCard() {
             goal: document.getElementById('goal').value,
             obstacle: document.getElementById('obstacle').value
         },
-        emotionalChange: document.getElementById('emotional-change').value,
+        emotionalChange: document.getElementById('emotional-change-type').value,
+        emotionalChangeContent: document.getElementById('emotional-change-content').value,
         createdAt: new Date().toISOString()
     };
     
@@ -470,8 +1196,17 @@ function saveCard() {
     
     // 保存并更新UI
     saveToLocalStorage();
-    renderActBeatCards(act, beat);
+    
+    // 检查是否需要应用堆叠逻辑
+    const container = document.getElementById(act === 'bucket' ? `bucket-${beat}` : `act-${act}-${beat}`);
+    if (container && container.hasAttribute('data-expanded')) {
+        renderExpandedCards(container, scriptCards.acts[act][beat], act, beat);
+    } else {
+        renderActBeatCards(act, beat);
+    }
+    
     updateCardCounts();
+    updateBeatSlotStatus();
     
     // 关闭模态框
     cardModal.style.display = 'none';
@@ -505,8 +1240,17 @@ function duplicateCard() {
     
     // 保存并更新UI
     saveToLocalStorage();
-    renderActBeatCards(act, beat);
+    
+    // 检查是否需要应用堆叠逻辑
+    const container = document.getElementById(act === 'bucket' ? `bucket-${beat}` : `act-${act}-${beat}`);
+    if (container && container.hasAttribute('data-expanded')) {
+        renderExpandedCards(container, scriptCards.acts[act][beat], act, beat);
+    } else {
+        renderActBeatCards(act, beat);
+    }
+    
     updateCardCounts();
+    updateBeatSlotStatus();
     
     // 关闭模态框
     cardModal.style.display = 'none';
@@ -526,8 +1270,17 @@ function deleteCard() {
     
     // 保存并更新UI
     saveToLocalStorage();
-    renderActBeatCards(act, beat);
+    
+    // 检查是否需要应用堆叠逻辑
+    const container = document.getElementById(act === 'bucket' ? `bucket-${beat}` : `act-${act}-${beat}`);
+    if (container && container.hasAttribute('data-expanded')) {
+        renderExpandedCards(container, scriptCards.acts[act][beat], act, beat);
+    } else {
+        renderActBeatCards(act, beat);
+    }
+    
     updateCardCounts();
+    updateBeatSlotStatus();
     
     // 关闭模态框
     cardModal.style.display = 'none';
@@ -535,17 +1288,28 @@ function deleteCard() {
 
 // 渲染所有卡片
 function renderAllCards() {
-    for (const act in scriptCards.acts) {
-        for (const beat in scriptCards.acts[act]) {
-            renderActBeatCards(act, beat);
-        }
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 渲染每一幕的每个节拍
+    for (const actId in structure.acts) {
+        structure.acts[actId].beats.forEach(beat => {
+            if (scriptCards.acts[actId] && scriptCards.acts[actId][beat.id]) {
+                renderActBeatCards(actId, beat.id);
+            }
+        });
+    }
+    
+    // 渲染创意桶
+    if (scriptCards.acts.bucket && scriptCards.acts.bucket.ideas) {
+        renderActBeatCards('bucket', 'ideas');
     }
     
     // 重新初始化拖拽
     setTimeout(initSortable, 100);
 }
 
-// 渲染单个节拍的卡片
+// 渲染单个节拍的卡片，增加堆叠功能
 function renderActBeatCards(act, beat) {
     const containerId = act === 'bucket' ? `bucket-${beat}` : `act-${act}-${beat}`;
     const container = document.getElementById(containerId);
@@ -553,19 +1317,183 @@ function renderActBeatCards(act, beat) {
     
     container.innerHTML = '';
     
-    scriptCards.acts[act][beat].forEach(card => {
+    const cards = scriptCards.acts[act][beat];
+    if (!cards) return;
+    
+    // 如果卡片数量超过3，则创建堆叠视图
+    if (cards.length > 3 && !container.hasAttribute('data-expanded')) {
+        createCardStack(container, cards, act, beat);
+    } else {
+        // 否则正常显示卡片
+        renderIndividualCards(container, cards, act, beat);
+    }
+    
+    // 更新节拍槽的状态
+    const beatSlot = container.closest('.beat-slot');
+    if (beatSlot) {
+        if (cards.length > 0) {
+            beatSlot.classList.add('has-cards');
+        } else {
+            beatSlot.classList.remove('has-cards');
+        }
+    }
+}
+
+// 创建卡片堆叠视图
+function createCardStack(container, cards, act, beat) {
+    const stackContainer = document.createElement('div');
+    stackContainer.className = 'card-stack';
+    stackContainer.setAttribute('data-count', cards.length);
+    stackContainer.setAttribute('data-act', act);
+    stackContainer.setAttribute('data-beat', beat);
+    
+    // 只展示前3张卡片作为预览
+    for (let i = 0; i < Math.min(3, cards.length); i++) {
+        const card = cards[i];
+        const previewEl = document.createElement('div');
+        previewEl.className = 'stack-preview';
+        
+        previewEl.innerHTML = `
+            <div class="card-location">${card.location.type}. ${card.location.place}</div>
+            <div class="card-description">${truncateText(card.description, 40)}</div>
+        `;
+        
+        stackContainer.appendChild(previewEl);
+    }
+    
+    // 点击堆叠时展开
+    stackContainer.addEventListener('click', function() {
+        expandCardStack(this);
+    });
+    
+    container.appendChild(stackContainer);
+}
+
+// 展开卡片堆叠
+function expandCardStack(stackElement) {
+    const act = stackElement.getAttribute('data-act');
+    const beat = stackElement.getAttribute('data-beat');
+    const containerId = act === 'bucket' ? `bucket-${beat}` : `act-${act}-${beat}`;
+    const container = document.getElementById(containerId);
+    
+    // 标记容器为展开状态
+    container.setAttribute('data-expanded', 'true');
+    
+    // 重新渲染
+    renderExpandedCards(container, scriptCards.acts[act][beat], act, beat);
+}
+
+// 渲染展开的卡片
+function renderExpandedCards(container, cards, act, beat) {
+    container.innerHTML = '';
+    
+    const expandedContainer = document.createElement('div');
+    expandedContainer.className = 'expanded-stack';
+    
+    // 添加标题和折叠按钮
+    const header = document.createElement('div');
+    header.className = 'stack-header';
+    header.innerHTML = `
+        <div class="stack-title">${cards.length}张卡片</div>
+        <button class="collapse-btn">折叠</button>
+    `;
+    
+    expandedContainer.appendChild(header);
+    
+    // 渲染所有卡片
+    cards.forEach(card => {
         const cardEl = document.createElement('div');
         cardEl.className = 'card';
         cardEl.setAttribute('data-id', card.id);
-        cardEl.setAttribute('data-type', card.type);
+        cardEl.setAttribute('data-status', card.status || 'confirmed');
+        
+        // 状态 Emoji 映射
+        const statusEmojis = {
+            'confirmed': '✅',
+            'pending': '⏳',
+            'question': '❓'
+        };
         
         cardEl.innerHTML = `
             <div class="card-type-indicator"></div>
+            <div class="status-emoji" data-id="${card.id}" data-act="${act}" data-beat="${beat}">
+                ${statusEmojis[card.status || 'confirmed']}
+            </div>
             <div class="card-location">${card.location.type}. ${card.location.place}</div>
             <div class="card-description">${card.description}</div>
         `;
         
+        // 卡片点击事件
         cardEl.addEventListener('click', function(e) {
+            // 如果点击的是状态 Emoji，则切换状态而不打开编辑框
+            if (e.target.classList.contains('status-emoji')) {
+                e.stopPropagation();
+                toggleCardStatus(e.target.getAttribute('data-id'), act, beat);
+                return;
+            }
+            
+            // 防止点击触发拖动
+            e.stopPropagation();
+            openCardModal(card.id, act, beat);
+        });
+        
+        expandedContainer.appendChild(cardEl);
+    });
+    
+    container.appendChild(expandedContainer);
+    
+    // 折叠按钮点击事件
+    container.querySelector('.collapse-btn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        collapseCardStack(container, act, beat);
+    });
+    
+    // 重新初始化拖拽
+    initSortableForContainer(container, act, beat);
+}
+
+// 折叠卡片堆叠
+function collapseCardStack(container, act, beat) {
+    // 移除展开标记
+    container.removeAttribute('data-expanded');
+    
+    // 重新渲染
+    renderActBeatCards(act, beat);
+}
+
+// 正常渲染单个卡片
+function renderIndividualCards(container, cards, act, beat) {
+    cards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
+        cardEl.setAttribute('data-id', card.id);
+        cardEl.setAttribute('data-status', card.status || 'confirmed');
+        
+        // 状态 Emoji 映射
+        const statusEmojis = {
+            'confirmed': '✅',
+            'pending': '⏳',
+            'question': '❓'
+        };
+        
+        cardEl.innerHTML = `
+            <div class="card-type-indicator"></div>
+            <div class="status-emoji" data-id="${card.id}" data-act="${act}" data-beat="${beat}">
+                ${statusEmojis[card.status || 'confirmed']}
+            </div>
+            <div class="card-location">${card.location.type}. ${card.location.place}</div>
+            <div class="card-description">${card.description}</div>
+        `;
+        
+        // 卡片点击事件
+        cardEl.addEventListener('click', function(e) {
+            // 如果点击的是状态 Emoji，则切换状态而不打开编辑框
+            if (e.target.classList.contains('status-emoji')) {
+                e.stopPropagation();
+                toggleCardStatus(e.target.getAttribute('data-id'), act, beat);
+                return;
+            }
+            
             // 防止点击触发拖动
             e.stopPropagation();
             openCardModal(card.id, act, beat);
@@ -575,39 +1503,133 @@ function renderActBeatCards(act, beat) {
     });
 }
 
+// 切换卡片状态
+function toggleCardStatus(cardId, act, beat) {
+    const card = findCardById(cardId, act, beat);
+    if (!card) return;
+    
+    // 状态循环：confirmed -> pending -> question -> confirmed
+    const statusCycle = ['confirmed', 'pending', 'question'];
+    const currentIndex = statusCycle.indexOf(card.status || 'confirmed');
+    const nextIndex = (currentIndex + 1) % statusCycle.length;
+    card.status = statusCycle[nextIndex];
+    
+    // 保存更改
+    saveToLocalStorage();
+    
+    // 更新UI
+    renderActBeatCards(act, beat);
+    
+    // 显示提示
+    const statusNames = {
+        'confirmed': '确认',
+        'pending': '保留',
+        'question': '存疑'
+    };
+    showToast(`卡片状态已更改为: ${statusNames[card.status]}`);
+}
+
+// 仅初始化单个容器的拖拽功能
+function initSortableForContainer(container, act, beat) {
+    const cardList = container.querySelector('.expanded-stack');
+    if (!cardList) return;
+    
+    const sortable = new Sortable(cardList, {
+        group: 'cards',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        filter: '.stack-header', // 忽略标题行
+        
+        onEnd: function(evt) {
+            if (evt.item.classList.contains('card')) {
+                const cardId = evt.item.getAttribute('data-id');
+                const fromAct = act;
+                const fromBeat = beat;
+                const toEl = evt.to.closest('.expanded-stack') || evt.to;
+                const toAct = toEl.closest('.beat-slot').getAttribute('data-act');
+                const toBeat = toEl.closest('.beat-slot').getAttribute('data-beat');
+                
+                // 如果位置没变，不做任何处理
+                if (fromAct === toAct && fromBeat === toBeat && evt.oldIndex === evt.newIndex) {
+                    return;
+                }
+                
+                // 找到被移动的卡片
+                const cardIndex = scriptCards.acts[fromAct][fromBeat].findIndex(c => c.id === cardId);
+                if (cardIndex === -1) return;
+                
+                // 取出卡片
+                const card = scriptCards.acts[fromAct][fromBeat][cardIndex];
+                
+                // 从原位置删除
+                scriptCards.acts[fromAct][fromBeat].splice(cardIndex, 1);
+                
+                // 插入到新位置
+                // 需要调整索引，因为展开视图中有标题元素
+                let newIndex = evt.newIndex;
+                if (evt.to.classList.contains('expanded-stack')) {
+                    newIndex -= 1; // 减去标题行
+                }
+                scriptCards.acts[toAct][toBeat].splice(newIndex, 0, card);
+                
+                // 保存更改
+                saveToLocalStorage();
+                
+                // 更新UI
+                updateCardCounts();
+                updateBeatSlotStatus();
+                
+                // 重新渲染来源和目标节拍的卡片
+                renderActBeatCards(fromAct, fromBeat);
+                if (fromAct !== toAct || fromBeat !== toBeat) {
+                    renderActBeatCards(toAct, toBeat);
+                }
+            }
+        }
+    });
+    
+    sortableInstances.push(sortable);
+}
+
+// 文本截断辅助函数
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substr(0, maxLength) + '...';
+}
+
 // 更新卡片计数
 function updateCardCounts() {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
     // 更新每幕的总计数
-    for (let act = 1; act <= 4; act++) {
+    for (const actId in structure.acts) {
         let count = 0;
-        for (const beat in scriptCards.acts[act]) {
-            count += scriptCards.acts[act][beat].length;
-        }
         
-        const countElement = document.querySelector(`.act-row:nth-child(${act}) .card-count`);
-        if (countElement) {
-            countElement.textContent = `${count} 张卡片`;
-            
-            // 根据救猫咪理论添加建议
-            countElement.classList.remove('warning');
-            
-            if (act === 1 && (count < 6 || count > 10)) {
-                countElement.classList.add('warning');
-            } else if (act !== 5 && (count < 5 || count > 8)) {
-                countElement.classList.add('warning');
+        // 计算该幕所有节拍的卡片总数
+        structure.acts[actId].beats.forEach(beat => {
+            if (scriptCards.acts[actId] && scriptCards.acts[actId][beat.id]) {
+                count += scriptCards.acts[actId][beat.id].length;
+            }
+        });
+        
+        // 查找DOM元素并更新计数
+        const actRow = document.querySelector(`.act-row[data-act="${actId}"]`);
+        if (actRow) {
+            const countElement = actRow.querySelector('.card-count');
+            if (countElement) {
+                countElement.textContent = `${count} 张卡片`;
             }
         }
     }
     
     // 更新桶的计数
     let bucketCount = 0;
-    for (const beat in scriptCards.acts.bucket) {
-        bucketCount += scriptCards.acts.bucket[beat].length;
-    }
-    
-    const bucketCountElement = document.querySelector(`.bucket-row .card-count`);
-    if (bucketCountElement) {
-        bucketCountElement.textContent = `${bucketCount} 张卡片`;
+    if (scriptCards.acts.bucket && scriptCards.acts.bucket.ideas) {
+        bucketCount = scriptCards.acts.bucket.ideas.length;
     }
 }
 
@@ -615,27 +1637,31 @@ function updateCardCounts() {
 function showStats() {
     const statsContent = document.getElementById('stats-content');
     
-    // 计算总卡片数
+    // 获取当前剧本类型和结构
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 计算总卡片数和每幕卡片数
     let totalCards = 0;
     let actCards = {};
     
-    for (let act = 1; act <= 4; act++) {
-        actCards[act] = 0;
-        for (const beat in scriptCards.acts[act]) {
-            actCards[act] += scriptCards.acts[act][beat].length;
-        }
-        totalCards += actCards[act];
+    for (const actId in structure.acts) {
+        actCards[actId] = 0;
+        
+        structure.acts[actId].beats.forEach(beat => {
+            if (scriptCards.acts[actId] && scriptCards.acts[actId][beat.id]) {
+                actCards[actId] += scriptCards.acts[actId][beat.id].length;
+            }
+        });
+        
+        totalCards += actCards[actId];
     }
     
-    // 计算类型分布
-    const typeCount = {
-        regular: 0,
-        'single-beat': 0,
-        setup: 0,
-        'fun-games': 0,
-        villain: 0,
-        'dark-night': 0,
-        finale: 0
+    // 计算卡片标记分布
+    const statusCount = {
+        confirmed: 0,
+        pending: 0,
+        question: 0
     };
     
     // 计算情感变化
@@ -645,60 +1671,82 @@ function showStats() {
     };
     
     // 检查关键节拍是否有卡片
-    const keyBeats = {
-        'opening': '开场画面',
-        'catalyst': '催化剂',
-        'midpoint': '中点',
-        'allislost': '一切尽失',
-        'finalimage': '最终画面'
-    };
+    const keyBeats = [];
+    for (const actId in structure.acts) {
+        structure.acts[actId].beats.forEach(beat => {
+            if (beat.recommended.includes('1个卡片')) {
+                keyBeats.push({ id: beat.id, title: beat.title, act: actId });
+            }
+        });
+    }
     
     const missingKeyBeats = [];
     
-    for (let act = 1; act <= 4; act++) {
-        for (const beat in scriptCards.acts[act]) {
-            scriptCards.acts[act][beat].forEach(card => {
-                typeCount[card.type || 'regular']++;
-                emotionalChange[card.emotionalChange]++;
-            });
+    for (const actId in structure.acts) {
+        structure.acts[actId].beats.forEach(beat => {
+            if (scriptCards.acts[actId] && scriptCards.acts[actId][beat.id]) {
+                scriptCards.acts[actId][beat.id].forEach(card => {
+                    statusCount[card.status || 'confirmed']++;
+                    emotionalChange[card.emotionalChange]++;
+                });
+            }
             
             // 检查关键节拍
-            if (keyBeats[beat] && scriptCards.acts[act][beat].length === 0) {
-                missingKeyBeats.push(keyBeats[beat]);
+            const isKeyBeat = keyBeats.some(kb => kb.id === beat.id && kb.act === actId);
+            if (isKeyBeat && (!scriptCards.acts[actId] || !scriptCards.acts[actId][beat.id] || scriptCards.acts[actId][beat.id].length === 0)) {
+                missingKeyBeats.push(beat.title);
             }
-        }
+        });
+    }
+    
+    // 根据剧本类型获取推荐卡片数
+    let recommendedCardCount = '';
+    switch (type) {
+        case 'movie':
+            recommendedCardCount = '约25-35张';
+            break;
+        case 'tv-hour':
+            recommendedCardCount = '约20-30张';
+            break;
+        case 'tv-half':
+            recommendedCardCount = '约12-18张';
+            break;
     }
     
     // 创建统计HTML
     let statsHTML = `
         <div class="stats-section">
             <h3>剧本概况</h3>
+            <p>剧本类型: ${type === 'movie' ? '电影' : (type === 'tv-hour' ? '一小时剧集' : '半小时喜剧')}</p>
             <p>总卡片数: ${totalCards}</p>
-            <p>推荐卡片数: ${totalCards > 0 ? '一小时剧本: 26张 / 半小时剧本: 14张' : '未确定'}</p>
+            <p>推荐卡片数: ${recommendedCardCount}</p>
             <p>项目最后保存: ${new Date(scriptCards.project.lastSaved).toLocaleString()}</p>
         </div>
         
         <div class="stats-section">
             <h3>幕分布</h3>
             <ul>
-                <li>第一幕: ${actCards[1]} 张卡片 ${actCards[1] < 6 || actCards[1] > 10 ? '(警告: 偏离推荐范围6-10)' : ''}</li>
-                <li>第二幕: ${actCards[2]} 张卡片 ${actCards[2] < 5 || actCards[2] > 8 ? '(警告: 偏离推荐范围5-8)' : ''}</li>
-                <li>第三幕: ${actCards[3]} 张卡片 ${actCards[3] < 5 || actCards[3] > 8 ? '(警告: 偏离推荐范围5-8)' : ''}</li>
-                <li>第四幕: ${actCards[4]} 张卡片 ${actCards[4] < 5 || actCards[4] > 8 ? '(警告: 偏离推荐范围5-8)' : ''}</li>
-                <li>创意桶: ${Object.values(scriptCards.acts.bucket).reduce((sum, arr) => sum + arr.length, 0)} 张卡片</li>
+    `;
+    
+    // 为每一幕添加统计
+    for (const actId in structure.acts) {
+        statsHTML += `<li>${structure.acts[actId].title}: ${actCards[actId]} 张卡片</li>`;
+    }
+    
+    // 添加创意桶统计
+    const bucketCount = scriptCards.acts.bucket && scriptCards.acts.bucket.ideas ? scriptCards.acts.bucket.ideas.length : 0;
+    statsHTML += `<li>创意桶: ${bucketCount} 张卡片</li>`;
+    
+    statsHTML += `
             </ul>
         </div>
         
         <div class="stats-section">
-            <h3>类型分布</h3>
+            <h3>卡片标记分布</h3>
             <ul>
-                <li>单场景节拍: ${typeCount['single-beat']} 张</li>
-                <li>铺垫: ${typeCount.setup} 张</li>
-                <li>游戏时间: ${typeCount['fun-games']} 张</li>
-                <li>坏人逼近: ${typeCount.villain} 张</li>
-                <li>灵魂黑夜: ${typeCount['dark-night']} 张</li>
-                <li>结局: ${typeCount.finale} 张</li>
-                <li>普通场景: ${typeCount.regular} 张</li>
+                <li>✅ 确认: ${statusCount.confirmed} 张</li>
+                <li>⏳ 保留: ${statusCount.pending} 张</li>
+                <li>❓ 存疑: ${statusCount.question} 张</li>
             </ul>
         </div>
         
@@ -712,13 +1760,9 @@ function showStats() {
         
         <div class="stats-section">
             <h3>救猫咪理论建议</h3>
-            <p>${totalCards < 20 ? '⚠️ 卡片总数偏少，故事可能节奏过慢' : 
-                totalCards > 32 ? '⚠️ 卡片总数偏多，故事可能过于紧凑' : 
-                '✅ 卡片总数在合理范围内'}</p>
-            
-            ${missingKeyBeats.length > 0 ? 
-              `<p>⚠️ 缺少关键节拍卡片: ${missingKeyBeats.join(', ')}</p>` : 
-              '<p>✅ 所有关键节拍都有卡片</p>'}
+            <p>${missingKeyBeats.length > 0 ? 
+              `⚠️ 缺少关键节拍卡片: ${missingKeyBeats.join(', ')}` : 
+              '✅ 所有关键节拍都有卡片'}</p>
               
             <p>${emotionalChange.positive === 0 || emotionalChange.negative === 0 ? 
                 '⚠️ 情感变化不平衡，考虑增加情感转折' : 
@@ -730,72 +1774,39 @@ function showStats() {
     statsModal.style.display = 'block';
 }
 
-// 导出项目
-function exportProject() {
-    showFilenameModal();
-}
-
 // 导出大纲
 function exportOutline() {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
     let outline = `# ${scriptCards.project.title} - 故事大纲\n\n`;
+    outline += `## 剧本类型: ${type === 'movie' ? '电影' : (type === 'tv-hour' ? '一小时剧集' : '半小时喜剧')}\n\n`;
     
-    const beatNames = {
-        'pre-opening': '开场前区域',
-        'opening': '开场画面',
-        'between-opening-theme': '开场-主题过渡',
-        'theme': '主题陈述',
-        'between-theme-setup': '主题-铺垫过渡',
-        'setup': '铺垫',
-        'between-setup-catalyst': '铺垫-催化剂过渡',
-        'catalyst': '催化剂',
-        'between-catalyst-debate': '催化剂-争论过渡',
-        'debate': '争论',
-        'post-debate': '争论后区域',
-        
-        'pre-bstory': 'B故事前区域',
-        'bstory': 'B故事',
-        'between-bstory-fun': 'B故事-游戏时间过渡',
-        'fun': '游戏时间',
-        'between-fun-midpoint': '游戏时间-中点过渡',
-        'midpoint': '中点',
-        'post-midpoint': '中点后区域',
-        
-        'pre-villain': '坏人逼近前区域',
-        'villain': '坏人逼近',
-        'between-villain-darknight': '坏人逼近-灵魂黑夜过渡',
-        'darknight': '灵魂黑夜',
-        'between-darknight-allislost': '灵魂黑夜-一切尽失过渡',
-        'allislost': '一切尽失',
-        'post-allislost': '一切尽失后区域',
-        
-        'pre-finaleprep': '大结局准备前区域',
-        'finaleprep': '大结局准备',
-        'between-finaleprep-finale': '大结局准备-大结局过渡',
-        'finale': '大结局',
-        'between-finale-finalimage': '大结局-最终画面过渡',
-        'finalimage': '最终画面',
-        'post-finalimage': '最终画面后区域'
-    };
-    
-    for (let act = 1; act <= 4; act++) {
+    // 为每一幕生成大纲
+    for (const actId in structure.acts) {
+        const act = structure.acts[actId];
         let actHasCards = false;
-        for (const beat in scriptCards.acts[act]) {
-            if (scriptCards.acts[act][beat].length > 0) {
+        
+        // 检查该幕是否有卡片
+        act.beats.forEach(beat => {
+            if (scriptCards.acts[actId] && scriptCards.acts[actId][beat.id] && scriptCards.acts[actId][beat.id].length > 0) {
                 actHasCards = true;
-                break;
             }
-        }
+        });
         
         if (!actHasCards) continue;
         
-        outline += `## 第${act}幕\n\n`;
+        outline += `## ${act.title}\n\n`;
         
-        for (const beat in scriptCards.acts[act]) {
-            if (scriptCards.acts[act][beat].length === 0) continue;
+        // 为每个节拍生成大纲
+        act.beats.forEach(beat => {
+            if (!scriptCards.acts[actId] || !scriptCards.acts[actId][beat.id] || scriptCards.acts[actId][beat.id].length === 0) {
+                return;
+            }
             
-            outline += `### ${beatNames[beat] || beat}\n\n`;
+            outline += `### ${beat.title} (${beat.recommended})\n\n`;
             
-            scriptCards.acts[act][beat].forEach((card, index) => {
+            scriptCards.acts[actId][beat.id].forEach((card, index) => {
                 outline += `**场景 ${index + 1}:** ${card.location.type}. ${card.location.place}\n`;
                 outline += `${card.description}\n\n`;
                 
@@ -803,29 +1814,30 @@ function exportOutline() {
                     outline += `**冲突:** ${card.conflict.protagonist || '未指定'} 想要 ${card.conflict.goal || '未指定'} 但是遇到 ${card.conflict.obstacle || '未指定'}\n\n`;
                 }
                 
-                outline += `**情感变化:** ${card.emotionalChange === 'positive' ? '正向 (+)' : '负向 (-)'}\n\n`;
+                if (card.emotionalChangeContent) {
+                    outline += `**情感变化 (${card.emotionalChange === 'positive' ? '+' : '-'}):** ${card.emotionalChangeContent}\n\n`;
+                } else {
+                    outline += `**情感变化:** ${card.emotionalChange === 'positive' ? '正向 (+)' : '负向 (-)'}\n\n`;
+                }
+                
+                const statusNames = {
+                    'confirmed': '✅ 确认',
+                    'pending': '⏳ 保留',
+                    'question': '❓ 存疑'
+                };
+                outline += `**状态:** ${statusNames[card.status || 'confirmed']}\n\n`;
             });
-        }
+        });
     }
     
     // 检查桶是否有卡片
-    let bucketHasCards = false;
-    for (const beat in scriptCards.acts.bucket) {
-        if (scriptCards.acts.bucket[beat].length > 0) {
-            bucketHasCards = true;
-            break;
-        }
-    }
-    
-    if (bucketHasCards) {
+    if (scriptCards.acts.bucket && scriptCards.acts.bucket.ideas && scriptCards.acts.bucket.ideas.length > 0) {
         outline += `## 创意桶\n\n`;
         
-        for (const beat in scriptCards.acts.bucket) {
-            scriptCards.acts.bucket[beat].forEach((card, index) => {
-                outline += `**想法 ${index + 1}:** ${card.location.type}. ${card.location.place}\n`;
-                outline += `${card.description}\n\n`;
-            });
-        }
+        scriptCards.acts.bucket.ideas.forEach((card, index) => {
+            outline += `**想法 ${index + 1}:** ${card.location.type}. ${card.location.place}\n`;
+            outline += `${card.description}\n\n`;
+        });
     }
     
     // 创建并下载文本文件
