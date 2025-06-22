@@ -171,6 +171,22 @@ const projectList = document.getElementById('project-list');
 // Sortable实例集合
 const sortableInstances = [];
 
+// 通用函数：显示/隐藏模态框
+function showModal(modal) {
+    if (modal) modal.style.display = 'block';
+}
+
+function hideModal(modal) {
+    if (modal) modal.style.display = 'none';
+}
+
+function hideAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+}
+
 // 初始化应用
 function initApp() {
     // 尝试从本地存储加载数据
@@ -514,7 +530,7 @@ function setupEventListeners() {
         e.preventDefault();
         const filename = document.getElementById('filename-input').value || scriptCards.project.title || '未命名剧本';
         saveProjectToFile(filename);
-        filenameModal.style.display = 'none';
+        hideModal(filenameModal);
     });
     
     // 导入表单提交
@@ -561,15 +577,29 @@ function setupEventListeners() {
         }
     });
     
-   // 模态框关闭按钮
-    document.querySelectorAll('.close-modal').forEach(closeBtn => {
+// 模态框关闭按钮统一处理
+document.querySelectorAll('.close-modal, .modal-close').forEach(closeBtn => {
     closeBtn.addEventListener('click', function() {
-        cardModal.style.display = 'none';
-        statsModal.style.display = 'none';
-        filenameModal.style.display = 'none';
-        importModal.style.display = 'none';
-        loadProjectModal.style.display = 'none';
-        if (feedbackModal) feedbackModal.style.display = 'none';
+        hideAllModals();
+    });
+});
+
+// 取消按钮统一处理
+document.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // 查找最近的模态框并隐藏
+        const modal = this.closest('.modal');
+        if (modal) hideModal(modal);
+    });
+});
+
+// 点击模态框外部关闭
+window.addEventListener('click', function(e) {
+    const modals = [cardModal, statsModal, filenameModal, importModal, loadProjectModal, feedbackModal];
+    modals.forEach(modal => {
+        if (modal && e.target === modal) {
+            hideModal(modal);
+        }
     });
 });
 
@@ -591,15 +621,7 @@ function setupEventListeners() {
     // 导出大纲按钮
     document.getElementById('export-outline').addEventListener('click', exportOutline);
     
-   // 点击模态框外部关闭
-    window.addEventListener('click', function(e) {
-    if (e.target === cardModal) cardModal.style.display = 'none';
-    if (e.target === statsModal) statsModal.style.display = 'none';
-    if (e.target === filenameModal) filenameModal.style.display = 'none';
-    if (e.target === importModal) importModal.style.display = 'none';
-    if (e.target === loadProjectModal) loadProjectModal.style.display = 'none';
-    if (feedbackModal && e.target === feedbackModal) feedbackModal.style.display = 'none';
-    });
+
     
     // 视图筛选按钮
     document.querySelectorAll('.view-btn').forEach(btn => {
@@ -630,17 +652,24 @@ function initQuickAdd() {
     
     const closeBtn = quickAddMenu.querySelector('.close-quick-add');
     
-    // 打开快速添加菜单
-    quickAddBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        // 生成幕和节拍选择器
-        generateActBeatSelectors();
-        quickAddMenu.style.display = 'block';
-        
-        // 初始化状态选择器
-        initStatusOptions();
-    });
+// 打开快速添加菜单
+quickAddBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    // 生成幕和节拍选择器
+    generateActBeatSelectors();
     
+    // 在iPad上居中显示
+    if (document.body.classList.contains('ipad-device')) {
+        quickAddMenu.style.top = '50%';
+        quickAddMenu.style.left = '50%';
+        quickAddMenu.style.transform = 'translate(-50%, -50%)';
+    }
+    
+    quickAddMenu.style.display = 'block';
+    
+    // 初始化状态选择器
+    initStatusOptions();
+});
     // 关闭菜单按钮
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
@@ -715,25 +744,139 @@ function initStatusOptions() {
     });
 }
 
-// iPad触控优化
 function initTouchOptimizations() {
-    // 检测是否是触控设备
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    // 检测是否是iPad或其他触控设备
+    const isIPad = /iPad/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !window.MSStream);
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     
-    if (isTouchDevice) {
+    if (isIPad || (isTouch && window.innerWidth >= 768 && window.innerWidth <= 1366)) {
+        // 添加iPad设备标识类
+        document.body.classList.add('ipad-device');
+        
+        // 添加触控设备标识类
         document.body.classList.add('touch-device');
         
-        // 增强触控区域
-        const clickableElements = document.querySelectorAll('button, .card, .beat-slot h3');
-        clickableElements.forEach(el => {
-            el.classList.add('touch-enhanced');
-        });
+        // 增强触控交互
+        enhanceTouchInteractions();
         
-        // 添加手势支持
-        if (window.GestureEvent) { // 仅在支持手势的设备上启用
+        // 监听屏幕方向变化
+        window.addEventListener('orientationchange', handleOrientationChange);
+        
+        // 启用捏合缩放（如果支持）
+        if (window.GestureEvent) {
             enablePinchZoom();
         }
+        
+        console.log("iPad/触控设备优化已启用");
     }
+}
+
+// 增强触控交互体验
+function enhanceTouchInteractions() {
+    // 增强按钮和卡片的触摸区域
+    const touchTargets = document.querySelectorAll('button, .card, .beat-slot h3, .add-card-btn, .close-modal, .modal-close');
+    touchTargets.forEach(el => {
+        el.classList.add('touch-enhanced');
+    });
+    
+    // 为卡片添加触摸反馈
+    document.addEventListener('touchstart', function(e) {
+        // 找到最近的卡片元素
+        const card = e.target.closest('.card');
+        if (card) {
+            // 添加触摸反馈定时器
+            card._touchTimer = setTimeout(() => {
+                card.classList.add('touch-hold');
+                
+                // 触发短暂的脉冲动画
+                card.classList.add('touch-pulse');
+                setTimeout(() => {
+                    card.classList.remove('touch-pulse');
+                }, 500);
+                
+            }, 150);
+        }
+    }, {passive: true});
+    
+    document.addEventListener('touchend', function(e) {
+        // 清除所有卡片的触摸状态
+        document.querySelectorAll('.card').forEach(card => {
+            if (card._touchTimer) {
+                clearTimeout(card._touchTimer);
+            }
+            card.classList.remove('touch-hold');
+        });
+    }, {passive: true});
+    
+    document.addEventListener('touchmove', function(e) {
+        // 如果是卡片正在移动，清除定时器
+        const card = e.target.closest('.card');
+        if (card && card._touchTimer) {
+            clearTimeout(card._touchTimer);
+        }
+    }, {passive: true});
+    
+    // 优化模态框按钮
+    enhanceModalTouchTargets();
+    
+    // 更新Sortable配置以适应触摸设备
+    enhanceSortableTouchBehavior();
+}
+
+// 增强模态框触摸区域
+function enhanceModalTouchTargets() {
+    // 增大关闭按钮的触摸区域
+    document.querySelectorAll('.close-modal, .modal-close').forEach(btn => {
+        btn.style.padding = '15px';
+        btn.style.marginTop = '-15px';
+        btn.style.marginRight = '-15px';
+    });
+    
+    // 增大表单按钮的触摸区域
+    document.querySelectorAll('.form-actions button').forEach(btn => {
+        btn.style.minHeight = '50px';
+    });
+}
+
+// 处理屏幕方向变化
+function handleOrientationChange() {
+    // 记录当前滚动位置
+    const scrollPos = {
+        x: window.scrollX,
+        y: window.scrollY
+    };
+    
+    // 触发重新布局
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        
+        // 优化布局后恢复滚动位置
+        setTimeout(() => {
+            window.scrollTo(scrollPos.x, scrollPos.y);
+        }, 100);
+        
+        console.log("屏幕方向已更改，布局已优化");
+    }, 300);
+}
+
+// 增强Sortable触摸行为
+function enhanceSortableTouchBehavior() {
+    // 将在初始化Sortable实例后调用此函数
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            document.querySelectorAll('.card-list').forEach(container => {
+                if (container._sortable) {
+                    container._sortable.option({
+                        delay: 150,                // 增加触摸延迟，防止意外拖动
+                        delayOnTouchOnly: true,    // 仅在触摸时使用延迟
+                        touchStartThreshold: 5,    // 降低触摸拖动阈值
+                        animation: 150,            // 增加动画时间
+                    });
+                }
+            });
+        }, 500);
+    });
 }
 
 // 启用捏合缩放（用于iPad查看大量卡片）
@@ -743,23 +886,52 @@ function enablePinchZoom() {
     
     let initialScale = 1;
     let currentScale = 1;
+    let initialDistance = 0;
     
-    // 处理手势事件
-    board.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-        initialScale = currentScale;
-    });
+    // 处理多点触摸事件
+    board.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+            // 计算两个触摸点之间的初始距离
+            initialDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            initialScale = currentScale;
+        }
+    }, {passive: true});
     
-    board.addEventListener('gesturechange', function(e) {
-        e.preventDefault();
-        currentScale = Math.min(Math.max(initialScale * e.scale, 0.5), 2);
-        board.style.transform = `scale(${currentScale})`;
-    });
+    board.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+            // 计算新的距离
+            const distance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            
+            // 计算新的缩放比例
+            const scale = distance / initialDistance * initialScale;
+            currentScale = Math.min(Math.max(scale, 0.5), 2);
+            
+            // 应用缩放
+            board.style.transform = `scale(${currentScale})`;
+            board.style.transformOrigin = 'center top';
+        }
+    }, {passive: true});
     
-    board.addEventListener('gestureend', function(e) {
-        e.preventDefault();
-        // 可以添加回弹动画
-    });
+    // 处理iPad手势事件（如果可用）
+    if (typeof window.GestureEvent !== 'undefined') {
+        board.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+            initialScale = currentScale;
+        });
+        
+        board.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+            currentScale = Math.min(Math.max(initialScale * e.scale, 0.5), 2);
+            board.style.transform = `scale(${currentScale})`;
+            board.style.transformOrigin = 'center top';
+        });
+    }
 }
 
 // 筛选视图
@@ -849,7 +1021,7 @@ function changeScriptType(newType) {
 function showFilenameModal() {
     const filenameInput = document.getElementById('filename-input');
     filenameInput.value = scriptCards.project.title || '未命名剧本';
-    filenameModal.style.display = 'block';
+    showModal(filenameModal);
 }
 
 // 保存项目到文件
@@ -896,107 +1068,154 @@ function initSortable() {
         const act = list.closest('.beat-slot').getAttribute('data-act');
         const beat = list.closest('.beat-slot').getAttribute('data-beat');
         
-        const sortable = new Sortable(list, {
-            group: 'cards',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            dragClass: 'sortable-drag',
-            filter: '.card-stack', // 忽略堆叠容器（需单独处理）
+// 基础Sortable选项
+const baseSortableOptions = {
+    group: 'cards',
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'is-dragging',
+    filter: '.card-stack', // 忽略堆叠容器（需单独处理）
+    
+    onStart: function(evt) {
+        // 显示垃圾桶
+        if (trashBin) {
+            // 隐藏浮动菜单和添加按钮
+            document.querySelector('.floating-menu').style.display = 'none';
+            document.getElementById('quick-add-btn').style.display = 'none';
             
-            onStart: function(evt) {
-                // 显示垃圾桶
-                if (trashBin) {
-                    // 隐藏浮动菜单和添加按钮
-                    document.querySelector('.floating-menu').style.display = 'none';
-                    document.getElementById('quick-add-btn').style.display = 'none';
-                    
-                    // 显示垃圾桶
-                    trashBin.classList.add('visible');
-                    
-                    // 添加到拖拽元素上的标记类
-                    evt.item.classList.add('is-dragging');
-                }
-                
-                // 初始化垃圾桶拖拽目标
-                initTrashBinTarget();
-            },
+            // 显示垃圾桶
+            trashBin.classList.add('visible');
             
-            onEnd: function(evt) {
-                // 隐藏垃圾桶，显示浮动菜单和添加按钮
-                if (trashBin) {
-                    trashBin.classList.remove('visible');
-                    trashBin.classList.remove('drag-over');
-                    document.querySelector('.floating-menu').style.display = 'flex';
-                    document.getElementById('quick-add-btn').style.display = 'flex';
-                    
-                    // 移除拖拽元素上的标记类
-                    evt.item.classList.remove('is-dragging');
-                }
-                
-                // 如果拖动的是卡片堆叠，忽略
-                if (evt.item.classList.contains('card-stack')) return;
-                
-                const cardId = evt.item.getAttribute('data-id');
-                const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
-                const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
-                
-                // 检查是否被拖到了垃圾桶
-                if (evt.to.id === 'trash-bin-target') {
-                    // 从数据中删除卡片
-                    scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
-                    
-                    // 保存更改
-                    saveToLocalStorage();
-                    
-                    // 更新UI
-                    updateCardCounts();
-                    updateBeatSlotStatus();
-                    
-                    // 重新渲染源节拍的卡片
-                    renderActBeatCards(fromAct, fromBeat);
-                    
-                    // 显示删除提示
-                    showToast('卡片已删除');
-                    
-                    return;
-                }
-                
-                const toAct = evt.to.closest('.beat-slot').getAttribute('data-act');
-                const toBeat = evt.to.closest('.beat-slot').getAttribute('data-beat');
-                
-                // 如果位置没变，不做任何处理
-                if (fromAct === toAct && fromBeat === toBeat && evt.oldIndex === evt.newIndex) {
-                    return;
-                }
-                
-                // 找到被移动的卡片
-                const cardIndex = scriptCards.acts[fromAct][fromBeat].findIndex(card => card.id === cardId);
-                if (cardIndex === -1) return;
-                
-                // 取出卡片
-                const card = scriptCards.acts[fromAct][fromBeat][cardIndex];
-                
-                // 从原位置删除
-                scriptCards.acts[fromAct][fromBeat].splice(cardIndex, 1);
-                
-                // 插入到新位置
-                scriptCards.acts[toAct][toBeat].splice(evt.newIndex, 0, card);
-                
-                // 保存更改
-                saveToLocalStorage();
-                
-                // 更新UI
-                updateCardCounts();
-                updateBeatSlotStatus();
-                
-                // 重新渲染来源和目标节拍的卡片
-                renderActBeatCards(fromAct, fromBeat);
-                if (fromAct !== toAct || fromBeat !== toBeat) {
-                    renderActBeatCards(toAct, toBeat);
-                }
+            // 添加到拖拽元素上的标记类
+            evt.item.classList.add('is-dragging');
+            
+            // 针对触控设备添加特殊样式
+            if (document.body.classList.contains('touch-device')) {
+                evt.item.classList.add('touch-dragging');
             }
+        }
+        
+        // 初始化垃圾桶拖拽目标
+        initTrashBinTarget();
+    },
+    
+    onEnd: function(evt) {
+        // 隐藏垃圾桶，显示浮动菜单和添加按钮
+        if (trashBin) {
+            trashBin.classList.remove('visible');
+            trashBin.classList.remove('drag-over');
+            document.querySelector('.floating-menu').style.display = 'flex';
+            document.getElementById('quick-add-btn').style.display = 'flex';
+            
+            // 移除拖拽元素上的标记类
+            evt.item.classList.remove('is-dragging');
+            evt.item.classList.remove('touch-dragging');
+        }
+        
+        // 移除所有拖拽高亮
+        document.querySelectorAll('.card-list.drag-highlight').forEach(el => {
+            el.classList.remove('drag-highlight');
         });
+        
+        // 如果拖动的是卡片堆叠，忽略
+        if (evt.item.classList.contains('card-stack')) return;
+        
+        const cardId = evt.item.getAttribute('data-id');
+        const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
+        const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
+        
+        // 检查是否被拖到了垃圾桶
+        if (evt.to.id === 'trash-bin-target') {
+            // 从数据中删除卡片
+            scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
+            
+            // 保存更改
+            saveToLocalStorage();
+            
+            // 更新UI
+            updateCardCounts();
+            updateBeatSlotStatus();
+            
+            // 重新渲染源节拍的卡片
+            renderActBeatCards(fromAct, fromBeat);
+            
+            // 显示删除提示
+            showToast('卡片已删除');
+            
+            return;
+        }
+        
+        const toAct = evt.to.closest('.beat-slot').getAttribute('data-act');
+        const toBeat = evt.to.closest('.beat-slot').getAttribute('data-beat');
+        
+        // 如果位置没变，不做任何处理
+        if (fromAct === toAct && fromBeat === toBeat && evt.oldIndex === evt.newIndex) {
+            return;
+        }
+        
+        // 找到被移动的卡片
+        const cardIndex = scriptCards.acts[fromAct][fromBeat].findIndex(card => card.id === cardId);
+        if (cardIndex === -1) return;
+        
+        // 取出卡片
+        const card = scriptCards.acts[fromAct][fromBeat][cardIndex];
+        
+        // 从原位置删除
+        scriptCards.acts[fromAct][fromBeat].splice(cardIndex, 1);
+        
+        // 插入到新位置
+        scriptCards.acts[toAct][toBeat].splice(evt.newIndex, 0, card);
+        
+        // 保存更改
+        saveToLocalStorage();
+        
+        // 更新UI
+        updateCardCounts();
+        updateBeatSlotStatus();
+        
+        // 重新渲染来源和目标节拍的卡片
+        renderActBeatCards(fromAct, fromBeat);
+        if (fromAct !== toAct || fromBeat !== toBeat) {
+            renderActBeatCards(toAct, toBeat);
+        }
+    },
+    
+    // 拖拽中添加高亮效果（增强触控设备视觉反馈）
+    onMove: function(evt) {
+        // 高亮目标容器
+        if (evt.to) {
+            // 移除所有高亮
+            document.querySelectorAll('.card-list.drag-highlight').forEach(el => {
+                if (el !== evt.to) {
+                    el.classList.remove('drag-highlight');
+                }
+            });
+            
+            // 添加高亮到目标容器
+            evt.to.classList.add('drag-highlight');
+        }
+        return true;
+    }
+};
+
+// 触控设备特殊选项
+if (document.body.classList.contains('touch-device')) {
+    baseSortableOptions.delay = 150;
+    baseSortableOptions.delayOnTouchOnly = true;
+    baseSortableOptions.touchStartThreshold = 5;
+}
+
+// 对每个容器初始化Sortable
+cardLists.forEach(list => {
+    // 如果是展开状态，跳过（由专门的函数处理）
+    if (list.hasAttribute('data-expanded')) return;
+    
+    const sortable = new Sortable(list, baseSortableOptions);
+    
+    // 保存实例，以便之后可以销毁
+    sortableInstances.push(sortable);
+});
         
         // 保存实例，以便之后可以销毁
         sortableInstances.push(sortable);
