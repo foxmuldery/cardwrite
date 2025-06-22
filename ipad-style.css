@@ -1,0 +1,286 @@
+/* iPad专用样式 - 高优先级确保覆盖 */
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+    /* 强制覆盖主布局样式 */
+    #script-board .beat-slots {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+        gap: 15px !important;
+        flex-direction: unset !important;
+        overflow-x: visible !important;
+        padding: 15px !important;
+        min-height: unset !important;
+        max-height: unset !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    
+    /* 强制修改节拍槽样式 */
+    #script-board .beat-slot {
+        min-width: unset !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* 卡片列表区域样式 */
+    #script-board .card-list {
+        flex: 1 !important;
+        height: auto !important;
+        min-height: 150px !important;
+        max-height: 300px !important;
+        overflow-y: auto !important;
+    }
+    
+    /* 增大卡片和互动元素大小 */
+    #script-board .card {
+        padding: 18px !important;
+        margin-bottom: 15px !important;
+        border-radius: 8px !important;
+        font-size: 16px !important;
+    }
+    
+    /* 增大添加按钮 */
+    #script-board .add-card-btn {
+        padding: 15px !important;
+        font-size: 24px !important;
+        height: 50px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* 增大浮动按钮 */
+    .floating-add-button {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 40px !important;
+        bottom: 40px !important;
+        right: 40px !important;
+    }
+    
+    /* 调整浮动菜单 */
+    .floating-menu {
+        bottom: 40px !important;
+        right: 135px !important;
+    }
+    
+    .floating-menu-item {
+        width: 65px !important;
+        height: 65px !important;
+        font-size: 26px !important;
+    }
+    
+    /* 优化水平模式 */
+    @media (orientation: landscape) {
+        #script-board .beat-slots {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+        }
+    }
+    
+    /* 优化垂直模式 */
+    @media (orientation: portrait) {
+        #script-board .beat-slots {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+        }
+    }
+}
+
+/* iPad Pro专用 */
+@media only screen and (min-width: 1024px) and (max-width: 1366px) {
+    #script-board .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
+    }
+}
+
+/* 强化触控反馈 */
+@media (pointer: coarse) {
+    .card:active,
+    button:active,
+    .add-card-btn:active,
+    .floating-menu-item:active,
+    .floating-add-button:active {
+        transform: scale(0.97) !important;
+        transition: transform 0.1s ease !important;
+    }
+}
+
+/* 响应式头部样式优化 */
+@media only screen and (max-width: 1024px) {
+    /* 头部紧凑布局 */
+    header {
+        padding: 10px 15px !important;
+    }
+    
+    .header-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    /* 标题样式 */
+    .app-title {
+        font-size: 20px !important;
+        white-space: nowrap;
+        margin-right: 10px;
+    }
+    
+    .app-subtitle {
+        display: none; /* 隐藏副标题 */
+    }
+    
+    .version-info {
+        font-size: 12px !important;
+    }
+    
+    /* 项目控制区 */
+    .project-controls {
+        flex: 1;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    
+    /* 脚本类型选择器和项目名称 */
+    .script-type-selector {
+        padding: 6px !important;
+        margin-right: 5px !important;
+        max-width: 100px !important;
+    }
+    
+    #project-title {
+        padding: 6px !important;
+        max-width: 120px !important;
+    }
+    
+    /* 图标按钮样式 */
+    .icon-button {
+        padding: 6px 8px !important;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 2px;
+        cursor: pointer;
+    }
+    
+    .button-text {
+        display: none; /* 隐藏按钮文字 */
+    }
+    
+    .button-icon {
+        font-size: 18px;
+    }
+    
+    /* 视图控制器调整 */
+    .view-controls {
+        padding: 10px 0 !important;
+        top: 50px !important;
+        overflow-x: auto;
+        white-space: nowrap;
+        justify-content: flex-start !important;
+        padding-left: 10px !important;
+    }
+    
+    .view-btn {
+        padding: 6px 12px !important;
+        min-width: unset !important;
+    }
+}
+
+/* iPad Pro断点微调 */
+@media only screen and (min-width: 768px) and (max-width: 1024px) {
+    .app-subtitle {
+        display: inline; /* iPad Pro上可以显示副标题 */
+    }
+    
+    #project-title {
+        max-width: 150px !important;
+    }
+}
+
+/* 小型平板和手机界面优化 */
+@media only screen and (max-width: 767px) {
+    .header-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .app-title {
+        margin-bottom: 8px;
+    }
+    
+    .project-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .header-buttons {
+        margin-top: 8px;
+    }
+}
+
+/* 深色模式 - 调整卡片和文本颜色，提高可读性 */
+body.dark-theme {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-theme header {
+    background: #1f2937;
+}
+
+body.dark-theme .view-controls {
+    background: #1f2937;
+}
+
+body.dark-theme .view-btn {
+    background: #374151;
+    color: #e0e0e0;
+    border-color: #4b5563;
+}
+
+body.dark-theme .view-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+body.dark-theme .act-row {
+    background: #1f2937;
+}
+
+body.dark-theme .act-header {
+    background: #111827;
+}
+
+body.dark-theme .beat-slot {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+body.dark-theme .beat-slot h3 {
+    background: #374151;
+}
+
+/* 修改卡片样式，提高文字可读性 */
+body.dark-theme .card {
+    background: #2d3748;
+    color: #ffffff; /* 更亮的文字颜色 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+body.dark-theme .card-location {
+    color: #90cdf4; /* 使位置文本更明显 */
+}
+
+body.dark-theme .card-description {
+    color: #f7fafc; /* 非常亮的描述文本 */
+}
+
+/* 保证按钮文本可见 */
+body.dark-theme button {
+    color: white;
+}

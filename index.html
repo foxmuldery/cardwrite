@@ -2,15 +2,18 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>老袁编剧卡片系统</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="ipad-style.css">
+
     <!-- 添加拖拽库 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
-    <header>
-        <h1>老袁编剧卡片系统（封闭内测版）<span class="version-info">v0.8.1</span></h1>
+<header>
+    <div class="header-main">
+        <h1 class="app-title">老袁编剧卡片系统<span class="app-subtitle">（测试版）</span><span class="version-info">v0.8.3</span></h1>
         <div class="project-controls">
             <select id="script-type" class="script-type-selector">
                 <option value="movie">电影</option>
@@ -19,15 +22,34 @@
             </select>
             <input type="text" id="project-title" placeholder="剧本名称">
             <div class="header-buttons">
-                <button id="save-project" data-tooltip="将项目以JSON文件保存，用于备份、分享">保存项目</button>
-                <button id="load-project" data-tooltip="读取浏览器缓存的自动保存版本">加载项目</button>
-                <button id="import-project" data-tooltip="打开本地存储的JSON文件">导入项目</button>
-                <button id="show-stats" data-tooltip="展示剧本的统计数据和分析">显示统计</button>
-                <button id="export-outline" data-tooltip="导出为可读的文本大纲格式">导出大纲</button>
-                <button id="feedback-btn" class="feedback-btn" data-tooltip="提交问题报告或功能建议">反馈</button>
+                <button id="save-project" class="icon-button" data-tooltip="将项目以JSON文件保存，用于备份、分享">
+                    <span class="button-icon">💾</span>
+                    <span class="button-text">保存</span>
+                </button>
+                <button id="load-project" class="icon-button" data-tooltip="读取浏览器缓存的自动保存版本">
+                    <span class="button-icon">📂</span>
+                    <span class="button-text">加载</span>
+                </button>
+                <button id="import-project" class="icon-button" data-tooltip="打开本地存储的JSON文件">
+                    <span class="button-icon">📥</span>
+                    <span class="button-text">导入</span>
+                </button>
+                <button id="show-stats" class="icon-button" data-tooltip="展示剧本的统计数据和分析">
+                    <span class="button-icon">📊</span>
+                    <span class="button-text">统计</span>
+                </button>
+                <button id="export-outline" class="icon-button" data-tooltip="导出为可读的文本大纲格式">
+                    <span class="button-icon">📃</span>
+                    <span class="button-text">导出</span>
+                </button>
+                <button id="feedback-btn" class="icon-button feedback-btn" data-tooltip="提交问题报告或功能建议">
+                    <span class="button-icon">💬</span>
+                    <span class="button-text">反馈</span>
+                </button>
             </div>
         </div>
-    </header>
+    </div>
+</header>
     
     <div class="view-controls">
         <button id="view-all" class="view-btn active">全部</button>
@@ -64,121 +86,116 @@
 </div>
 
 
-    <!-- 快速添加卡片菜单 -->
-    <div class="quick-add-menu" id="quick-add-menu">
-        <div class="quick-add-header">
-            <h3>快速添加卡片</h3>
-            <button class="close-quick-add">&times;</button>
+<!-- 快速添加卡片菜单 - 简化版 -->
+<div class="quick-add-menu" id="quick-add-menu">
+    <div class="quick-add-header">
+        <h3>快速添加卡片</h3>
+        <button class="close-quick-add">&times;</button>
+    </div>
+    <div class="quick-add-content">
+        <!-- 只保留添加位置选择器 -->
+        <div class="quick-add-section">
+            <label>添加到</label>
+            <div class="act-beat-selector">
+                <!-- 动态生成的幕和节拍选择器 -->
+            </div>
         </div>
-        <div class="quick-add-content">
-            <div class="quick-add-section">
-                <label>添加到：</label>
-                <div class="act-beat-selector">
-                    <!-- 动态生成的幕和节拍选择器 -->
-                </div>
-            </div>
-            
-            <div class="quick-add-section">
-                <label>状态：</label>
-                <div class="status-options">
-                    <div class="status-option" data-status="confirmed">
-                        <span class="status-emoji">✅</span> 确认
-                    </div>
-                    <div class="status-option" data-status="pending">
-                        <span class="status-emoji">⏳</span> 保留
-                    </div>
-                    <div class="status-option" data-status="question">
-                        <span class="status-emoji">❓</span> 存疑
-                    </div>
-                </div>
-                <input type="hidden" id="quick-add-status" value="confirmed">
-            </div>
-            
-            <div class="quick-add-section">
-                <label>场景位置：</label>
-                <div class="location-input">
-                    <select id="quick-add-location-type">
-                        <option value="INT">INT.</option>
-                        <option value="EXT">EXT.</option>
-                    </select>
-                    <input type="text" id="quick-add-location" placeholder="位置描述">
-                </div>
-            </div>
-            
-            <div class="quick-add-section">
-                <label>场景描述：</label>
-                <textarea id="quick-add-description" placeholder="简短描述场景..."></textarea>
-            </div>
-            
-            <div class="quick-add-actions">
-                <button id="quick-add-save">添加卡片</button>
-                <button id="quick-add-save-and-new">添加并创建新卡片</button>
-            </div>
+        
+        <!-- 直接是内容输入部分 -->
+        <div class="quick-add-section">
+            <textarea id="quick-add-description" placeholder="描述场景发生的事件..." rows="5"></textarea>
+        </div>
+        
+        <div class="quick-add-actions">
+            <button id="quick-add-save" class="primary-btn">添加卡片</button>
+            <button id="quick-add-save-and-new" class="secondary-btn">添加并创建新卡片</button>
         </div>
     </div>
-    
-    <!-- 卡片编辑模态框 -->
-    <div id="card-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>编辑卡片</h2>
-            <form id="card-form">
-                <input type="hidden" id="card-id">
-                <input type="hidden" id="card-act">
-                <input type="hidden" id="card-beat">
-                
-                <div class="form-group">
-                    <label>卡片标记:</label>
-                    <select id="card-status">
-                        <option value="confirmed">确认</option>
-                        <option value="pending">保留</option>
-                        <option value="question">存疑</option>
-                    </select>
+</div>
+
+ <!-- 卡片编辑模态框 -->
+<div id="card-modal" class="modal">
+    <div class="modal-content card-edit-content">
+        <span class="close-modal">&times;</span>
+        <h2>编辑卡片</h2>
+        <form id="card-form">
+            <input type="hidden" id="card-id">
+            <input type="hidden" id="card-act">
+            <input type="hidden" id="card-beat">
+            
+            <!-- 卡片标记使用图标按钮替代下拉菜单 -->
+            <div class="form-group card-status-selector">
+                <label>卡片标记</label>
+                <div class="status-options">
+                    <div class="status-option" data-status="confirmed">
+                        <span>确认</span>
+                    </div>
+                    <div class="status-option" data-status="pending">
+                        <span>保留</span>
+                    </div>
+                    <div class="status-option" data-status="question">
+                        <span>存疑</span>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>场景位置:</label>
+                <input type="hidden" id="card-status" value="confirmed">
+            </div>
+            
+            <!-- 将场景类型和位置合并到一行 -->
+            <div class="form-group">
+                <label>场景</label>
+                <div class="location-input">
                     <select id="scene-location-type">
                         <option value="INT">INT.</option>
                         <option value="EXT">EXT.</option>
+                        <option value="I/E">I/E.</option>
                     </select>
-                    <input type="text" id="scene-location" placeholder="位置描述">
+                    <input type="text" id="scene-location" placeholder="输入场景">
                 </div>
-                
-                <div class="form-group">
-                    <label>场景描述:</label>
-                    <textarea id="scene-description" placeholder="简短描述场景发生的事情，不要超过2-3句话"></textarea>
+            </div>
+            
+            <!-- 更改为"剧情内容"提高用户理解 -->
+            <div class="form-group">
+                <label>剧情内容</label>
+                <textarea id="scene-description" placeholder="描述场景中发生的事件，推荐2-3句话"></textarea>
+            </div>
+            
+            <!-- 简化冲突输入，使用选项卡 -->
+            <div class="form-group conflict-group">
+                <label>冲突</label>
+                <div class="conflict-tabs">
+                    <div class="conflict-tab active" data-field="protagonist">主人公</div>
+                    <div class="conflict-tab" data-field="goal">目标</div>
+                    <div class="conflict-tab" data-field="obstacle">障碍</div>
                 </div>
-                
-                <div class="form-group">
-                    <label>冲突:</label>
-                    <div class="conflict-inputs">
-                        <input type="text" id="protagonist" placeholder="主人公">
-                        <input type="text" id="goal" placeholder="目标">
-                        <input type="text" id="obstacle" placeholder="障碍">
+                <input type="text" id="protagonist" class="conflict-input active" placeholder="主人公是谁？">
+                <input type="text" id="goal" class="conflict-input" placeholder="他/她的目标是什么？">
+                <input type="text" id="obstacle" class="conflict-input" placeholder="什么阻碍了他/她？">
+            </div>
+            
+            <!-- 简化情感变化选择 -->
+            <div class="form-group">
+                <label>情感变化</label>
+                <div class="emotional-change-inputs">
+                    <div class="emotion-buttons">
+                        <button type="button" class="emotion-btn active" data-value="positive">+</button>
+                        <button type="button" class="emotion-btn" data-value="negative">-</button>
+                        <button type="button" class="emotion-btn" data-value="neutral">=</button>
                     </div>
+                    <input type="hidden" id="emotional-change-type" value="positive">
+                    <input type="text" id="emotional-change-content" placeholder="描述情感变化的具体内容">
                 </div>
-                
-                <div class="form-group">
-                    <label>情感变化:</label>
-                    <div class="emotional-change-inputs">
-                        <select id="emotional-change-type">
-                            <option value="positive">正向 (+)</option>
-                            <option value="negative">负向 (-)</option>
-                        </select>
-                        <input type="text" id="emotional-change-content" placeholder="描述情感变化的具体内容">
-                    </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" id="save-card" class="primary-btn">保存</button>
+                <div class="secondary-actions">
+                    <button type="button" id="duplicate-card" class="secondary-btn">复制</button>
+                    <button type="button" id="delete-card" class="danger-btn">删除</button>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" id="save-card">保存</button>
-                    <button type="button" id="duplicate-card">复制</button>
-                    <button type="button" id="delete-card">删除</button>
-                </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
-    
+</div>
     <!-- 文件名输入模态框 -->
     <div id="filename-modal" class="modal">
         <div class="modal-content">

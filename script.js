@@ -9,7 +9,7 @@ let scriptCards = {
 };
 
 // 常量和配置
-const APP_VERSION = '0.8.1';
+const APP_VERSION = '0.8.3';
 const AUTO_SAVE_INTERVAL = 60000; // 自动保存间隔，单位毫秒（1分钟）
 let autoSaveTimer = null;
 let lastAutoSaveTime = 0;
@@ -210,6 +210,8 @@ function initApp() {
     // 初始化垃圾桶和灵感箱功能
     initTrashBin();
     initInspirationBox();
+
+
 }
 
 // 初始化垃圾桶功能
@@ -571,6 +573,131 @@ function setupEventListeners() {
         loadProjectModal.style.display = 'none';
         if (feedbackModal) feedbackModal.style.display = 'none';
     });
+
+
+// 卡片状态选择器
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('status-option') || e.target.parentElement.classList.contains('status-option')) {
+        const option = e.target.classList.contains('status-option') ? e.target : e.target.parentElement;
+        
+        // 更新选中状态
+        document.querySelectorAll('.status-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+        
+        // 更新隐藏输入值
+        document.getElementById('card-status').value = option.getAttribute('data-status');
+    }
+});
+
+// 冲突选项卡交互
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('conflict-tab')) {
+        // 移除所有active类
+        document.querySelectorAll('.conflict-tab').forEach(t => {
+            t.classList.remove('active');
+        });
+        document.querySelectorAll('.conflict-input').forEach(input => {
+            input.classList.remove('active');
+        });
+        
+        // 设置当前选项卡为active
+        e.target.classList.add('active');
+        const field = e.target.getAttribute('data-field');
+        document.getElementById(field).classList.add('active');
+    }
+});
+
+// 情感按钮交互
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('emotion-btn')) {
+        e.preventDefault(); // 防止表单提交
+        
+        // 更新选中状态
+        document.querySelectorAll('.emotion-btn').forEach(b => {
+            b.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // 更新隐藏输入值
+        document.getElementById('emotional-change-type').value = e.target.getAttribute('data-value');
+    }
+});
+
+// 快速添加状态选项
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('quick-status-option')) {
+        // 更新选中状态
+        document.querySelectorAll('.quick-status-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        e.target.classList.add('selected');
+        
+        // 更新隐藏输入值
+        document.getElementById('quick-add-status').value = e.target.getAttribute('data-status');
+    }
+});
+
+
+    // 更多选项按钮
+const moreOptionsBtn = document.getElementById('more-options');
+const moreOptionsMenu = document.getElementById('more-options-menu');
+if (moreOptionsBtn && moreOptionsMenu) {
+    moreOptionsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        moreOptionsMenu.classList.toggle('show');
+    });
+    
+    // 点击其他地方时关闭菜单
+    document.addEventListener('click', function(e) {
+        if (moreOptionsMenu.classList.contains('show') && !moreOptionsMenu.contains(e.target) && e.target !== moreOptionsBtn) {
+            moreOptionsMenu.classList.remove('show');
+        }
+    });
+}
+
+// 深色模式切换
+const themeToggleBtn = document.getElementById('toggle-theme');
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', function() {
+        document.body.classList.toggle('dark-theme');
+        moreOptionsMenu.classList.remove('show');
+        
+        // 你可以保存用户的主题偏好到本地存储
+        if (document.body.classList.contains('dark-theme')) {
+            localStorage.setItem('theme', 'dark');
+            this.textContent = '浅色模式';
+        } else {
+            localStorage.setItem('theme', 'light');
+            this.textContent = '深色模式';
+        }
+    });
+    
+    // 检查用户之前的主题偏好
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.textContent = '浅色模式';
+    }
+}
+
+
+// 帮助和关于按钮
+const helpBtn = document.getElementById('help-button');
+if (helpBtn) {
+    helpBtn.addEventListener('click', function() {
+        moreOptionsMenu.classList.remove('show');
+        alert('帮助文档功能将在后续版本开放');
+    });
+}
+
+const aboutBtn = document.getElementById('about-button');
+if (aboutBtn) {
+    aboutBtn.addEventListener('click', function() {
+        moreOptionsMenu.classList.remove('show');
+        alert('老袁编剧卡片系统 ' + APP_VERSION + '\n开发者: 老袁\n联系: yuanzhe2023@hotmail.com');
+    });
+}
 });
 
     // 保存卡片表单
@@ -619,6 +746,9 @@ function setupEventListeners() {
             filterView(viewId);
         });
     });
+
+
+
 }
 
 // 初始化快速添加卡片功能
@@ -626,7 +756,10 @@ function initQuickAdd() {
     const quickAddBtn = document.getElementById('quick-add-btn');
     const quickAddMenu = document.getElementById('quick-add-menu');
     
-    if (!quickAddBtn || !quickAddMenu) return;
+    if (!quickAddBtn || !quickAddMenu) {
+        console.error('快速添加按钮或菜单未找到');
+        return;
+    }
     
     const closeBtn = quickAddMenu.querySelector('.close-quick-add');
     
@@ -637,8 +770,13 @@ function initQuickAdd() {
         generateActBeatSelectors();
         quickAddMenu.style.display = 'block';
         
-        // 初始化状态选择器
-        initStatusOptions();
+        // 清空输入框
+        document.getElementById('quick-add-description').value = '';
+        
+        // 自动聚焦到描述输入框
+        setTimeout(() => {
+            document.getElementById('quick-add-description').focus();
+        }, 100);
     });
     
     // 关闭菜单按钮
@@ -669,6 +807,8 @@ function initQuickAdd() {
         addCardBtn.addEventListener('click', function() {
             saveQuickCard(false);
         });
+    } else {
+        console.error('快速添加保存按钮未找到');
     }
     
     // 添加并创建新卡片按钮
@@ -677,8 +817,35 @@ function initQuickAdd() {
         addAndNewBtn.addEventListener('click', function() {
             saveQuickCard(true);
         });
+    } else {
+        console.error('添加并创建新卡片按钮未找到');
     }
+    
+    // 添加键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // Esc键关闭菜单
+        if (e.key === 'Escape') {
+            if (quickAddMenu.style.display === 'block') {
+                quickAddMenu.style.display = 'none';
+            }
+            if (cardModal.style.display === 'block') {
+                if (confirm('关闭编辑器？未保存的更改将丢失。')) {
+                    cardModal.style.display = 'none';
+                }
+            }
+        }
+        
+        // Ctrl+Enter或Command+Enter保存
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (cardModal.style.display === 'block') {
+                document.getElementById('save-card').click();
+            } else if (quickAddMenu.style.display === 'block') {
+                document.getElementById('quick-add-save').click();
+            }
+        }
+    });
 }
+
 
 // 初始化状态选项
 function initStatusOptions() {
@@ -874,6 +1041,7 @@ function saveProjectToFile(filename) {
     alert('项目已保存到文件!');
 }
 
+
 // 初始化拖拽功能
 function initSortable() {
     // 先销毁所有现有的Sortable实例
@@ -898,109 +1066,243 @@ function initSortable() {
         
         const sortable = new Sortable(list, {
             group: 'cards',
-            animation: 150,
+            animation: 150, // 启用动画并调整时长
+            easing: "cubic-bezier(1, 0, 0, 1)", // 使用更流畅的缓动函数
+            delay: 150, // 触摸设备上的延迟启动
+            delayOnTouchOnly: true, // 仅在触摸时应用延迟
+            touchStartThreshold: 5, // 触摸阈值，防止意外拖动
+            
+            // 视觉样式类
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
-            filter: '.card-stack', // 忽略堆叠容器（需单独处理）
             
+            // 过滤器
+            filter: '.card-stack',
+            
+            // 开始拖拽
             onStart: function(evt) {
                 // 显示垃圾桶
                 if (trashBin) {
-                    // 隐藏浮动菜单和添加按钮
                     document.querySelector('.floating-menu').style.display = 'none';
                     document.getElementById('quick-add-btn').style.display = 'none';
                     
-                    // 显示垃圾桶
-                    trashBin.classList.add('visible');
+                    // 添加过渡动画显示垃圾桶
+                    trashBin.style.display = 'flex';
+                    setTimeout(() => {
+                        trashBin.classList.add('visible');
+                    }, 10);
                     
-                    // 添加到拖拽元素上的标记类
+                    // 添加拖拽中的样式
                     evt.item.classList.add('is-dragging');
                 }
                 
-                // 初始化垃圾桶拖拽目标
+                // 初始化垃圾桶
                 initTrashBinTarget();
+                
+                // 高亮所有可放置区域
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.add('drop-target');
+                });
+                
+                // 触觉反馈（如果设备支持）
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
             },
             
+            // 拖拽过程中
+            onMove: function(evt, originalEvent) {
+                // 高亮当前目标
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.remove('active-drop-target');
+                });
+                
+                if (evt.to) {
+                    evt.to.classList.add('active-drop-target');
+                }
+                
+                // 垃圾桶检测
+                if (trashBin) {
+                    // 检测是否在垃圾桶上方
+                    const touchOrMouse = originalEvent.touches ? 
+                                        originalEvent.touches[0] : originalEvent;
+                    const trashRect = trashBin.getBoundingClientRect();
+                    
+                    if (touchOrMouse.clientX >= trashRect.left && 
+                        touchOrMouse.clientX <= trashRect.right && 
+                        touchOrMouse.clientY >= trashRect.top && 
+                        touchOrMouse.clientY <= trashRect.bottom) {
+                        trashBin.classList.add('drag-over');
+                    } else {
+                        trashBin.classList.remove('drag-over');
+                    }
+                }
+            },
+            
+            // 结束拖拽
             onEnd: function(evt) {
-                // 隐藏垃圾桶，显示浮动菜单和添加按钮
+                // 恢复UI元素
                 if (trashBin) {
                     trashBin.classList.remove('visible');
                     trashBin.classList.remove('drag-over');
-                    document.querySelector('.floating-menu').style.display = 'flex';
-                    document.getElementById('quick-add-btn').style.display = 'flex';
                     
-                    // 移除拖拽元素上的标记类
+                    // 使用延迟隐藏垃圾桶，以便动画完成
+                    setTimeout(() => {
+                        trashBin.style.display = 'none';
+                        document.querySelector('.floating-menu').style.display = 'flex';
+                        document.getElementById('quick-add-btn').style.display = 'flex';
+                    }, 300);
+                    
                     evt.item.classList.remove('is-dragging');
                 }
                 
-                // 如果拖动的是卡片堆叠，忽略
+                // 移除所有高亮
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.remove('drop-target');
+                    list.classList.remove('active-drop-target');
+                });
+                
+                // 如果是卡片堆栈，忽略
                 if (evt.item.classList.contains('card-stack')) return;
                 
                 const cardId = evt.item.getAttribute('data-id');
                 const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
                 const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
                 
-                // 检查是否被拖到了垃圾桶
+                // 检查是否拖到垃圾桶
                 if (evt.to.id === 'trash-bin-target') {
-                    // 从数据中删除卡片
+                    // 删除卡片处理逻辑
                     scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
                     
-                    // 保存更改
                     saveToLocalStorage();
-                    
-                    // 更新UI
                     updateCardCounts();
                     updateBeatSlotStatus();
                     
-                    // 重新渲染源节拍的卡片
-                    renderActBeatCards(fromAct, fromBeat);
+                    // 显示删除动画
+                    evt.item.classList.add('card-deleted');
                     
-                    // 显示删除提示
-                    showToast('卡片已删除');
+                    // 等待动画完成后再更新UI
+                    setTimeout(() => {
+                        renderActBeatCards(fromAct, fromBeat);
+                        showToast('卡片已删除', 'success');
+                    }, 300);
+                    
+                    // 触觉反馈（删除操作）
+                    if (navigator.vibrate) {
+                        navigator.vibrate([30, 30, 30]);
+                    }
                     
                     return;
                 }
                 
+                // 正常的卡片移动逻辑
                 const toAct = evt.to.closest('.beat-slot').getAttribute('data-act');
                 const toBeat = evt.to.closest('.beat-slot').getAttribute('data-beat');
                 
-                // 如果位置没变，不做任何处理
+                // 位置没变则不处理
                 if (fromAct === toAct && fromBeat === toBeat && evt.oldIndex === evt.newIndex) {
                     return;
                 }
                 
-                // 找到被移动的卡片
+                // 处理卡片移动
                 const cardIndex = scriptCards.acts[fromAct][fromBeat].findIndex(card => card.id === cardId);
                 if (cardIndex === -1) return;
                 
-                // 取出卡片
                 const card = scriptCards.acts[fromAct][fromBeat][cardIndex];
-                
-                // 从原位置删除
                 scriptCards.acts[fromAct][fromBeat].splice(cardIndex, 1);
-                
-                // 插入到新位置
                 scriptCards.acts[toAct][toBeat].splice(evt.newIndex, 0, card);
                 
-                // 保存更改
                 saveToLocalStorage();
-                
-                // 更新UI
                 updateCardCounts();
                 updateBeatSlotStatus();
                 
-                // 重新渲染来源和目标节拍的卡片
+                // 触觉反馈（成功移动）
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                
+                // 更新UI
                 renderActBeatCards(fromAct, fromBeat);
                 if (fromAct !== toAct || fromBeat !== toBeat) {
                     renderActBeatCards(toAct, toBeat);
+                    
+                    // 显示移动成功消息
+                    const toBeatTitle = getBeatTitle(toBeat);
+                    showToast(`卡片已移动到 ${toAct === 'bucket' ? '创意桶' : `第${toAct}幕 - ${toBeatTitle}`}`, 'success');
                 }
             }
         });
         
-        // 保存实例，以便之后可以销毁
         sortableInstances.push(sortable);
     });
+}
+
+// 获取节拍标题 - 新增辅助函数
+function getBeatTitle(beatId) {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 遍历所有幕和节拍
+    for (const actId in structure.acts) {
+        const beatObj = structure.acts[actId].beats.find(b => b.id === beatId);
+        if (beatObj) {
+            return beatObj.title;
+        }
+    }
+    
+    return beatId; // 如果找不到，返回ID
+}
+
+// 高亮所有可放置区域 - 新增函数
+function highlightDropTargets() {
+    document.querySelectorAll('.card-list').forEach(list => {
+        list.classList.add('drop-target');
+    });
+    
+    document.querySelectorAll('.beat-slot').forEach(slot => {
+        slot.classList.add('drop-target');
+    });
+}
+
+// 清除所有高亮 - 新增函数
+function clearDropTargets() {
+    document.querySelectorAll('.card-list').forEach(list => {
+        list.classList.remove('drop-target');
+        list.classList.remove('active-drop-target');
+    });
+    
+    document.querySelectorAll('.beat-slot').forEach(slot => {
+        slot.classList.remove('drop-target');
+        slot.classList.remove('active-drop-target');
+    });
+}
+
+// 清除当前活动高亮 - 新增函数
+function clearActiveDropTarget() {
+    document.querySelectorAll('.card-list.active-drop-target').forEach(el => {
+        el.classList.remove('active-drop-target');
+    });
+    
+    document.querySelectorAll('.beat-slot.active-drop-target').forEach(el => {
+        el.classList.remove('active-drop-target');
+    });
+}
+
+// 获取节拍标题 - 新增辅助函数
+function getBeatTitle(beatId) {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 遍历所有幕和节拍
+    for (const actId in structure.acts) {
+        const beatObj = structure.acts[actId].beats.find(b => b.id === beatId);
+        if (beatObj) {
+            return beatObj.title;
+        }
+    }
+    
+    return beatId; // 如果找不到，返回ID
 }
 
 // 初始化垃圾桶拖拽目标
@@ -1034,7 +1336,23 @@ function initTrashBinTarget() {
     trashBin.addEventListener('dragleave', function(e) {
         this.classList.remove('drag-over');
     });
+    
+    // 添加触摸事件处理
+    trashBin.addEventListener('touchmove', function(e) {
+        const touch = e.touches[0];
+        const trashRect = this.getBoundingClientRect();
+        
+        // 检查触摸位置是否在垃圾桶上
+        if (touch.clientX >= trashRect.left && touch.clientX <= trashRect.right &&
+            touch.clientY >= trashRect.top && touch.clientY <= trashRect.bottom) {
+            this.classList.add('drag-over');
+        } else {
+            this.classList.remove('drag-over');
+        }
+    }, { passive: true });
 }
+
+
 
 // 获取所有已保存项目
 function getAllSavedProjects() {
@@ -1310,25 +1628,67 @@ function openCardModal(cardId, act, beat) {
     document.getElementById('card-act').value = act;
     document.getElementById('card-beat').value = beat;
     
+    // 重置所有状态选择器
+    document.querySelectorAll('.status-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // 重置冲突选项卡
+    document.querySelectorAll('.conflict-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.conflict-input').forEach(input => {
+        input.classList.remove('active');
+    });
+    document.querySelector('.conflict-tab[data-field="protagonist"]').classList.add('active');
+    document.getElementById('protagonist').classList.add('active');
+    
+    // 重置情感按钮
+    document.querySelectorAll('.emotion-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector('.emotion-btn[data-value="positive"]').classList.add('active');
+    
     if (cardId) {
         // 编辑现有卡片
         const card = findCardById(cardId, act, beat);
         if (card) {
             document.getElementById('card-id').value = card.id;
-            document.getElementById('card-status').value = card.status || 'confirmed';
+            
+            // 设置卡片状态
+            const status = card.status || 'confirmed';
+            document.getElementById('card-status').value = status;
+            document.querySelector(`.status-option[data-status="${status}"]`).classList.add('selected');
+            
+            // 设置场景位置
             document.getElementById('scene-location-type').value = card.location.type;
             document.getElementById('scene-location').value = card.location.place;
+            
+            // 设置场景描述
             document.getElementById('scene-description').value = card.description;
+            
+            // 设置冲突
             document.getElementById('protagonist').value = card.conflict.protagonist;
             document.getElementById('goal').value = card.conflict.goal;
             document.getElementById('obstacle').value = card.conflict.obstacle;
-            document.getElementById('emotional-change-type').value = card.emotionalChange;
+            
+            // 设置情感变化
+            const emotionalChange = card.emotionalChange || 'positive';
+            document.getElementById('emotional-change-type').value = emotionalChange;
+            document.querySelector(`.emotion-btn[data-value="${emotionalChange}"]`).classList.add('active');
             document.getElementById('emotional-change-content').value = card.emotionalChangeContent || '';
         }
     } else {
         // 新卡片
         document.getElementById('card-id').value = generateId();
-        document.getElementById('card-status').value = 'confirmed'; // 默认为确认
+        
+        // 默认选中"确认"状态
+        document.getElementById('card-status').value = 'confirmed';
+        document.querySelector('.status-option[data-status="confirmed"]').classList.add('selected');
+        
+        // 默认选中"正向"情感变化
+        document.getElementById('emotional-change-type').value = 'positive';
+        document.querySelector('.emotion-btn[data-value="positive"]').classList.add('active');
         
         // 如果是从特定节拍添加，填充相应的提示文本
         if (beat && beatHints[beat]) {
@@ -1337,8 +1697,12 @@ function openCardModal(cardId, act, beat) {
     }
     
     cardModal.style.display = 'block';
+    
+    // 自动聚焦到场景位置
+    setTimeout(() => {
+        document.getElementById('scene-location').focus();
+    }, 100);
 }
-
 // 查找卡片
 function findCardById(id, act, beat) {
     return scriptCards.acts[act][beat].find(card => card.id === id);
@@ -1405,40 +1769,34 @@ function generateActBeatSelectors() {
     }
 }
 
-// 保存快速创建的卡片
+// 保存快速创建的卡片 - 简化版
 function saveQuickCard(createNew) {
     const actSelector = document.getElementById('quick-add-act');
     const beatSelector = document.getElementById('quick-add-beat');
-    const statusSelector = document.getElementById('quick-add-status');
-    const locationTypeSelector = document.getElementById('quick-add-location-type');
-    const locationInput = document.getElementById('quick-add-location');
     const descriptionInput = document.getElementById('quick-add-description');
     
-    if (!actSelector || !beatSelector || !statusSelector || !locationTypeSelector || !locationInput || !descriptionInput) {
+    if (!actSelector || !beatSelector || !descriptionInput) {
         alert('快速添加功能初始化失败');
         return;
     }
     
     const act = actSelector.value;
     const beat = beatSelector.value;
-    const status = statusSelector.value;
-    const locationType = locationTypeSelector.value;
-    const location = locationInput.value;
     const description = descriptionInput.value;
     
     // 基本验证
-    if (!location || !description) {
-        alert('请填写位置和描述');
+    if (!description) {
+        alert('请填写剧情内容');
         return;
     }
     
-    // 创建卡片对象
+    // 创建卡片对象 - 使用默认值
     const card = {
         id: generateId(),
-        status: status,
+        status: 'confirmed', // 默认为"确认"
         location: {
-            type: locationType,
-            place: location
+            type: 'INT', // 默认为INT
+            place: '' // 默认为空
         },
         description: description,
         conflict: {
@@ -1461,10 +1819,9 @@ function saveQuickCard(createNew) {
     updateBeatSlotStatus();
     
     if (createNew) {
-        // 只清空位置和描述，保留其他字段
-        locationInput.value = '';
+        // 只清空描述，保留其他字段
         descriptionInput.value = '';
-        locationInput.focus();
+        descriptionInput.focus();
     } else {
         // 关闭菜单
         document.getElementById('quick-add-menu').style.display = 'none';
@@ -1472,15 +1829,34 @@ function saveQuickCard(createNew) {
     
     // 提示用户
     const actionText = createNew ? '已添加卡片，可继续创建' : '已添加卡片';
-    showToast(actionText);
+    showToast(actionText, 'success');
 }
 
 // 显示简短的提示消息
-function showToast(message) {
+function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container') || document.body;
     const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.textContent = message;
+    toast.className = `toast-message toast-${type}`;
+    
+    // 根据消息类型添加图标
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '✅ ';
+            break;
+        case 'error':
+            icon = '❌ ';
+            break;
+        case 'warning':
+            icon = '⚠️ ';
+            break;
+        case 'info':
+        default:
+            icon = 'ℹ️ ';
+            break;
+    }
+    
+    toast.textContent = icon + message;
     toastContainer.appendChild(toast);
     
     // 动画显示
@@ -1494,8 +1870,9 @@ function showToast(message) {
         setTimeout(() => {
             toastContainer.removeChild(toast);
         }, 300);
-    }, 2000);
+    }, 3000);
 }
+
 
 // 保存卡片
 function saveCard() {
@@ -1548,8 +1925,10 @@ function saveCard() {
     
     // 关闭模态框
     cardModal.style.display = 'none';
+    
+    // 显示保存成功提示
+    showToast('卡片已保存', 'success');
 }
-
 // 复制卡片
 function duplicateCard() {
     const id = document.getElementById('card-id').value;
@@ -2232,6 +2611,7 @@ function exportOutline() {
     a.click();
     document.body.removeChild(a);
 }
+
 
 // 当页面加载完成时初始化应用
 document.addEventListener('DOMContentLoaded', initApp);
