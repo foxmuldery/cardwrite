@@ -210,6 +210,9 @@ function initApp() {
     // 初始化垃圾桶和灵感箱功能
     initTrashBin();
     initInspirationBox();
+
+    // 添加iPad检测和强制应用网格布局
+    detectAndApplyIPadLayout();
 }
 
 // 初始化垃圾桶功能
@@ -619,6 +622,24 @@ function setupEventListeners() {
             filterView(viewId);
         });
     });
+
+    // iPad模式切换按钮
+    const toggleBtn = document.getElementById('toggle-ipad-mode');
+    if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+        document.body.classList.toggle('force-ipad-layout');
+        if (document.body.classList.contains('force-ipad-layout')) {
+            applyGridLayout();
+            this.textContent = '恢复默认';
+            this.style.background = '#27ae60';
+        } else {
+            resetLayout();
+            this.textContent = 'iPad模式';
+            this.style.background = '#e74c3c';
+        }
+    });
+}
+
 }
 
 // 初始化快速添加卡片功能
@@ -2403,6 +2424,79 @@ function exportOutline() {
     a.click();
     document.body.removeChild(a);
 }
+
+// 检测并应用iPad布局
+function detectAndApplyIPadLayout() {
+    // 检测是否是iPad
+    const isIPad = 
+        (navigator.userAgent.includes('iPad') || 
+        (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document)) ||
+        (window.innerWidth >= 768 && window.innerWidth <= 1366 && 'ontouchend' in document);
+    
+    if (isIPad) {
+        console.log('检测到iPad设备，应用优化布局');
+        document.body.classList.add('ipad-device');
+        
+        // 强制应用网格布局
+        setTimeout(function() {
+            applyGridLayout();
+            // 监听窗口大小变化，重新应用布局
+            window.addEventListener('resize', function() {
+                // 使用防抖动，避免频繁触发
+                clearTimeout(window.resizeTimer);
+                window.resizeTimer = setTimeout(function() {
+                    applyGridLayout();
+                }, 250);
+            });
+        }, 100);
+    }
+}
+
+// 强制应用网格布局
+function applyGridLayout() {
+    console.log('应用网格布局');
+    const beatSlotsElements = document.querySelectorAll('.beat-slots');
+    beatSlotsElements.forEach(container => {
+        // 强制应用网格布局
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+        container.style.gap = '15px';
+        container.style.flexDirection = 'unset';
+        container.style.overflowX = 'visible';
+        
+        // 调整子元素
+        container.querySelectorAll('.beat-slot').forEach(slot => {
+            slot.style.minWidth = 'unset';
+            slot.style.width = '100%';
+            slot.style.margin = '0';
+        });
+    });
+    
+    // 重新初始化拖拽
+    setTimeout(initSortable, 200);
+}
+
+// 恢复默认布局
+function resetLayout() {
+    const beatSlotsElements = document.querySelectorAll('.beat-slots');
+    beatSlotsElements.forEach(container => {
+        container.style.display = 'flex';
+        container.style.gridTemplateColumns = '';
+        container.style.gap = '';
+        container.style.flexDirection = '';
+        container.style.overflowX = 'auto';
+        
+        container.querySelectorAll('.beat-slot').forEach(slot => {
+            slot.style.minWidth = '250px';
+            slot.style.width = '250px';
+            slot.style.margin = '0 10px';
+        });
+    });
+    
+    setTimeout(initSortable, 200);
+}
+
+
 
 // 当页面加载完成时初始化应用
 document.addEventListener('DOMContentLoaded', initApp);

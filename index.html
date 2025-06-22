@@ -2,15 +2,19 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>老袁编剧卡片系统</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="ipad-style.css">
+
     <!-- 添加拖拽库 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <button id="toggle-ipad-mode" style="padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 4px; margin-left: 10px;">iPad模式</button>
 </head>
 <body>
     <header>
-        <h1>老袁编剧卡片系统（ipad优化版）<span class="version-info">v0.8.2</span></h1>
+        <h1>老袁编剧卡片系统（ipad优化版）<span class="version-info">v0.8.1</span></h1>
         <div class="project-controls">
             <select id="script-type" class="script-type-selector">
                 <option value="movie">电影</option>

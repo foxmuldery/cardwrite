@@ -1,0 +1,111 @@
+/* iPad专用样式 - 高优先级确保覆盖 */
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+    body {
+        /* 添加一个标记，方便调试 */
+        --ipad-mode: active;
+    }
+    
+    /* 强制覆盖主布局样式 */
+    #script-board .beat-slots {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+        gap: 15px !important;
+        flex-direction: unset !important;
+        overflow-x: visible !important;
+        padding: 15px !important;
+        min-height: unset !important;
+        max-height: unset !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    
+    /* 强制修改节拍槽样式 */
+    #script-board .beat-slot {
+        min-width: unset !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* 卡片列表区域样式 */
+    #script-board .card-list {
+        flex: 1 !important;
+        height: auto !important;
+        min-height: 150px !important;
+        max-height: 300px !important;
+        overflow-y: auto !important;
+    }
+    
+    /* 增大卡片和互动元素大小 */
+    #script-board .card {
+        padding: 18px !important;
+        margin-bottom: 15px !important;
+        border-radius: 8px !important;
+        font-size: 16px !important;
+    }
+    
+    /* 增大添加按钮 */
+    #script-board .add-card-btn {
+        padding: 15px !important;
+        font-size: 24px !important;
+        height: 50px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* 增大浮动按钮 */
+    .floating-add-button {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 40px !important;
+        bottom: 40px !important;
+        right: 40px !important;
+    }
+    
+    /* 调整浮动菜单 */
+    .floating-menu {
+        bottom: 40px !important;
+        right: 135px !important;
+    }
+    
+    .floating-menu-item {
+        width: 65px !important;
+        height: 65px !important;
+        font-size: 26px !important;
+    }
+    
+    /* 优化水平模式 */
+    @media (orientation: landscape) {
+        #script-board .beat-slots {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+        }
+    }
+    
+    /* 优化垂直模式 */
+    @media (orientation: portrait) {
+        #script-board .beat-slots {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+        }
+    }
+}
+
+/* iPad Pro专用 */
+@media only screen and (min-width: 1024px) and (max-width: 1366px) {
+    #script-board .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
+    }
+}
+
+/* 强化触控反馈 */
+@media (pointer: coarse) {
+    .card:active,
+    button:active,
+    .add-card-btn:active,
+    .floating-menu-item:active,
+    .floating-add-button:active {
+        transform: scale(0.97) !important;
+        transition: transform 0.1s ease !important;
+    }
+}
