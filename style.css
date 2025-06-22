@@ -1345,3 +1345,237 @@ select:focus, input:focus, textarea:focus {
 .toast-info {
   background: rgba(52, 152, 219, 0.9);
 }
+
+/* iPad专用布局优化 */
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+  /* 调整主容器布局 */
+  .board-container {
+      padding: 10px;
+  }
+  
+  /* 修改幕区域布局 */
+  .act-row {
+      margin-bottom: 20px;
+  }
+  
+  /* 重要改变：使节拍槽在iPad上横向排列成网格 */
+  .beat-slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      padding: 15px;
+      overflow-x: initial; /* 覆盖原来的横向滚动 */
+      min-height: initial; /* 覆盖原来的最小高度 */
+  }
+  
+  /* 调整节拍槽尺寸 */
+  .beat-slot {
+      width: 100%;
+      min-width: initial;
+      margin: 0;
+      height: auto;
+  }
+  
+  /* 调整卡片列表区域 */
+  .card-list {
+      height: auto;
+      min-height: 150px;
+      max-height: 400px;
+  }
+  
+  /* 增大卡片尺寸和间距以便于触控 */
+  .card {
+      padding: 18px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+  }
+  
+  /* 改进添加按钮的触控区域 */
+  .add-card-btn {
+      height: 44px;
+      font-size: 20px;
+  }
+  
+  /* 优化浮动按钮位置和大小 */
+  .floating-add-button {
+      bottom: 40px;
+      right: 40px;
+      width: 70px;
+      height: 70px;
+      font-size: 35px;
+  }
+  
+  .floating-menu {
+      bottom: 40px;
+      right: 120px;
+  }
+  
+  .floating-menu-item {
+      width: 60px;
+      height: 60px;
+  }
+  
+  /* 优化滚动体验 */
+  .card-list, .beat-slots {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+  }
+  
+  /* 针对分屏模式的优化 */
+  @media (max-width: 900px) {
+      .beat-slots {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+  }
+  
+  /* 横屏模式可以显示更多列 */
+  @media (orientation: landscape) {
+      .beat-slots {
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      }
+  }
+}
+
+/* iPad Pro 大屏幕优化 */
+@media only screen and (min-width: 1024px) and (max-width: 1366px) {
+  .beat-slots {
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* 触控设备通用优化 */
+@media (pointer: coarse) {
+  /* 增强可点击区域 */
+  button, .add-card-btn, .card, .beat-slot h3 {
+      cursor: pointer;
+  }
+  
+  /* 触摸反馈效果 */
+  .card:active {
+      transform: scale(0.98);
+      background-color: #f9f9f9;
+      transition: transform 0.1s ease, background-color 0.1s ease;
+  }
+  
+  button:active, .add-card-btn:active, .floating-add-button:active, .floating-menu-item:active {
+      transform: scale(0.95);
+      opacity: 0.9;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+  }
+}
+
+/* 拖拽动画增强 */
+.sortable-ghost {
+  opacity: 0.4;
+  background-color: #f0f8ff !important;
+  border: 2px dashed #3498db !important;
+  box-shadow: none !important;
+  transform: scale(0.95);
+  transition: all 0.2s ease;
+}
+
+.sortable-chosen {
+  z-index: 100;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23) !important;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.sortable-drag {
+  opacity: 0.9;
+  background: white;
+  transform: rotate(1deg) scale(1.02);
+  transition: all 0.2s ease;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+/* 拖放目标区域样式 */
+.card-list.drop-target {
+  background-color: rgba(52, 152, 219, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.card-list.active-drop-target {
+  background-color: rgba(52, 152, 219, 0.15);
+  border: 1px dashed #3498db;
+  transition: all 0.2s ease;
+}
+
+/* 删除动画 */
+.card-deleted {
+  transform: scale(0) rotate(10deg);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* 拖拽中的卡片样式 */
+.card.is-dragging {
+  opacity: 0.9;
+  background-color: white;
+  transform: scale(1.02) rotate(1deg);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  z-index: 100;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 垃圾桶拖拽动画增强 */
+.drag-trash-bin {
+  display: none;
+  position: fixed;
+  bottom: 50px;
+  right: 50px;
+  width: 120px;
+  height: 120px;
+  background-color: rgba(231, 76, 60, 0.85);
+  border-radius: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.drag-trash-bin.visible {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.drag-trash-bin.drag-over {
+  transform: scale(1.1);
+  background-color: #e74c3c;
+  box-shadow: 0 7px 20px rgba(0,0,0,0.4);
+}
+
+.drag-trash-bin.drag-over .trash-icon {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+/* iPad专用动画优化 */
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+  .drag-trash-bin {
+      width: 150px;
+      height: 150px;
+      bottom: 60px;
+      right: 60px;
+  }
+  
+  .trash-icon {
+      font-size: 50px;
+  }
+  
+  .trash-text {
+      font-size: 16px;
+  }
+}

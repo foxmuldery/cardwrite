@@ -874,7 +874,8 @@ function saveProjectToFile(filename) {
     alert('项目已保存到文件!');
 }
 
-// 初始化拖拽功能 - 替换现有的initSortable函数
+
+// 初始化拖拽功能
 function initSortable() {
     // 先销毁所有现有的Sortable实例
     sortableInstances.forEach(instance => {
@@ -898,155 +899,192 @@ function initSortable() {
         
         const sortable = new Sortable(list, {
             group: 'cards',
-            animation: 150,
+            animation: 150, // 启用动画并调整时长
+            easing: "cubic-bezier(1, 0, 0, 1)", // 使用更流畅的缓动函数
+            delay: 150, // 触摸设备上的延迟启动
+            delayOnTouchOnly: true, // 仅在触摸时应用延迟
+            touchStartThreshold: 5, // 触摸阈值，防止意外拖动
+            
+            // 视觉样式类
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
-            filter: '.card-stack', // 忽略堆叠容器（需单独处理）
             
-            // 开始拖拽时
+            // 过滤器
+            filter: '.card-stack',
+            
+            // 开始拖拽
             onStart: function(evt) {
                 // 显示垃圾桶
                 if (trashBin) {
-                    // 隐藏浮动菜单和添加按钮
                     document.querySelector('.floating-menu').style.display = 'none';
                     document.getElementById('quick-add-btn').style.display = 'none';
                     
-                    // 显示垃圾桶
-                    trashBin.classList.add('visible');
+                    // 添加过渡动画显示垃圾桶
+                    trashBin.style.display = 'flex';
+                    setTimeout(() => {
+                        trashBin.classList.add('visible');
+                    }, 10);
                     
-                    // 添加到拖拽元素上的标记类
+                    // 添加拖拽中的样式
                     evt.item.classList.add('is-dragging');
                 }
                 
-                // 初始化垃圾桶拖拽目标
+                // 初始化垃圾桶
                 initTrashBinTarget();
                 
                 // 高亮所有可放置区域
-                highlightDropTargets();
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.add('drop-target');
+                });
                 
-                // 给拖拽反馈 - 触觉反馈（对支持的设备）
+                // 触觉反馈（如果设备支持）
                 if (navigator.vibrate) {
                     navigator.vibrate(30);
                 }
             },
             
-            // 拖拽中
+            // 拖拽过程中
             onMove: function(evt, originalEvent) {
-                // 检查是否悬停在垃圾桶上
+                // 高亮当前目标
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.remove('active-drop-target');
+                });
+                
+                if (evt.to) {
+                    evt.to.classList.add('active-drop-target');
+                }
+                
+                // 垃圾桶检测
                 if (trashBin) {
+                    // 检测是否在垃圾桶上方
+                    const touchOrMouse = originalEvent.touches ? 
+                                        originalEvent.touches[0] : originalEvent;
                     const trashRect = trashBin.getBoundingClientRect();
-                    const x = originalEvent.clientX;
-                    const y = originalEvent.clientY;
                     
-                    // 检查鼠标/触摸位置是否在垃圾桶区域内
-                    if (x >= trashRect.left && x <= trashRect.right && 
-                        y >= trashRect.top && y <= trashRect.bottom) {
+                    if (touchOrMouse.clientX >= trashRect.left && 
+                        touchOrMouse.clientX <= trashRect.right && 
+                        touchOrMouse.clientY >= trashRect.top && 
+                        touchOrMouse.clientY <= trashRect.bottom) {
                         trashBin.classList.add('drag-over');
                     } else {
                         trashBin.classList.remove('drag-over');
                     }
                 }
-                
-                // 高亮当前拖拽悬停的目标区域
-                clearActiveDropTarget();
-                if (evt.to) {
-                    evt.to.classList.add('active-drop-target');
-                    evt.to.closest('.beat-slot').classList.add('active-drop-target');
-                }
             },
             
-            // 拖拽结束时
+            // 结束拖拽
             onEnd: function(evt) {
-                // 隐藏垃圾桶，显示浮动菜单和添加按钮
+                // 恢复UI元素
                 if (trashBin) {
                     trashBin.classList.remove('visible');
                     trashBin.classList.remove('drag-over');
-                    document.querySelector('.floating-menu').style.display = 'flex';
-                    document.getElementById('quick-add-btn').style.display = 'flex';
                     
-                    // 移除拖拽元素上的标记类
+                    // 使用延迟隐藏垃圾桶，以便动画完成
+                    setTimeout(() => {
+                        trashBin.style.display = 'none';
+                        document.querySelector('.floating-menu').style.display = 'flex';
+                        document.getElementById('quick-add-btn').style.display = 'flex';
+                    }, 300);
+                    
                     evt.item.classList.remove('is-dragging');
                 }
                 
                 // 移除所有高亮
-                clearDropTargets();
+                document.querySelectorAll('.card-list').forEach(list => {
+                    list.classList.remove('drop-target');
+                    list.classList.remove('active-drop-target');
+                });
                 
-                // 如果拖动的是卡片堆叠，忽略
+                // 如果是卡片堆栈，忽略
                 if (evt.item.classList.contains('card-stack')) return;
                 
                 const cardId = evt.item.getAttribute('data-id');
                 const fromAct = evt.from.closest('.beat-slot').getAttribute('data-act');
                 const fromBeat = evt.from.closest('.beat-slot').getAttribute('data-beat');
                 
-                // 检查是否被拖到了垃圾桶
+                // 检查是否拖到垃圾桶
                 if (evt.to.id === 'trash-bin-target') {
-                    // 从数据中删除卡片
+                    // 删除卡片处理逻辑
                     scriptCards.acts[fromAct][fromBeat] = scriptCards.acts[fromAct][fromBeat].filter(card => card.id !== cardId);
                     
-                    // 保存更改
                     saveToLocalStorage();
-                    
-                    // 更新UI
                     updateCardCounts();
                     updateBeatSlotStatus();
                     
-                    // 重新渲染源节拍的卡片
-                    renderActBeatCards(fromAct, fromBeat);
+                    // 显示删除动画
+                    evt.item.classList.add('card-deleted');
                     
-                    // 显示删除提示
-                    showToast('卡片已删除');
+                    // 等待动画完成后再更新UI
+                    setTimeout(() => {
+                        renderActBeatCards(fromAct, fromBeat);
+                        showToast('卡片已删除', 'success');
+                    }, 300);
                     
                     // 触觉反馈（删除操作）
                     if (navigator.vibrate) {
-                        navigator.vibrate([50, 50, 50]);
+                        navigator.vibrate([30, 30, 30]);
                     }
                     
                     return;
                 }
                 
+                // 正常的卡片移动逻辑
                 const toAct = evt.to.closest('.beat-slot').getAttribute('data-act');
                 const toBeat = evt.to.closest('.beat-slot').getAttribute('data-beat');
                 
-                // 如果位置没变，不做任何处理
+                // 位置没变则不处理
                 if (fromAct === toAct && fromBeat === toBeat && evt.oldIndex === evt.newIndex) {
                     return;
                 }
                 
-                // 找到被移动的卡片
+                // 处理卡片移动
                 const cardIndex = scriptCards.acts[fromAct][fromBeat].findIndex(card => card.id === cardId);
                 if (cardIndex === -1) return;
                 
-                // 取出卡片
                 const card = scriptCards.acts[fromAct][fromBeat][cardIndex];
-                
-                // 从原位置删除
                 scriptCards.acts[fromAct][fromBeat].splice(cardIndex, 1);
-                
-                // 插入到新位置
                 scriptCards.acts[toAct][toBeat].splice(evt.newIndex, 0, card);
                 
-                // 保存更改
                 saveToLocalStorage();
-                
-                // 更新UI
                 updateCardCounts();
                 updateBeatSlotStatus();
                 
-                // 重新渲染来源和目标节拍的卡片
+                // 触觉反馈（成功移动）
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                
+                // 更新UI
                 renderActBeatCards(fromAct, fromBeat);
                 if (fromAct !== toAct || fromBeat !== toBeat) {
                     renderActBeatCards(toAct, toBeat);
                     
-                    // 显示移动提示
-                    showToast(`卡片已移动到 ${toAct === 'bucket' ? '创意桶' : `第${toAct}幕 - ${getBeatTitle(toBeat)}`}`);
+                    // 显示移动成功消息
+                    const toBeatTitle = getBeatTitle(toBeat);
+                    showToast(`卡片已移动到 ${toAct === 'bucket' ? '创意桶' : `第${toAct}幕 - ${toBeatTitle}`}`, 'success');
                 }
             }
         });
         
-        // 保存实例，以便之后可以销毁
         sortableInstances.push(sortable);
     });
+}
+
+// 获取节拍标题 - 新增辅助函数
+function getBeatTitle(beatId) {
+    const type = scriptCards.project.type;
+    const structure = scriptStructures[type];
+    
+    // 遍历所有幕和节拍
+    for (const actId in structure.acts) {
+        const beatObj = structure.acts[actId].beats.find(b => b.id === beatId);
+        if (beatObj) {
+            return beatObj.title;
+        }
+    }
+    
+    return beatId; // 如果找不到，返回ID
 }
 
 // 高亮所有可放置区域 - 新增函数
@@ -1100,7 +1138,7 @@ function getBeatTitle(beatId) {
     return beatId; // 如果找不到，返回ID
 }
 
-// 初始化垃圾桶拖拽目标 - 替换现有函数
+// 初始化垃圾桶拖拽目标
 function initTrashBinTarget() {
     const trashBin = document.getElementById('drag-trash-bin');
     if (!trashBin) return;
@@ -1146,6 +1184,9 @@ function initTrashBinTarget() {
         }
     }, { passive: true });
 }
+
+
+
 // 获取所有已保存项目
 function getAllSavedProjects() {
     const projects = [];
@@ -1585,7 +1626,7 @@ function saveQuickCard(createNew) {
     showToast(actionText);
 }
 
-// 显示简短的提示消息 - 替换现有函数
+// 显示简短的提示消息
 function showToast(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container') || document.body;
     const toast = document.createElement('div');
@@ -1625,6 +1666,8 @@ function showToast(message, type = 'info') {
         }, 300);
     }, 3000);
 }
+
+
 // 保存卡片
 function saveCard() {
     const id = document.getElementById('card-id').value;
