@@ -9,7 +9,7 @@ let scriptCards = {
 };
 
 // 常量和配置
-const APP_VERSION = '0.8.3';
+const APP_VERSION = '0.8.4';
 const AUTO_SAVE_INTERVAL = 60000; // 自动保存间隔，单位毫秒（1分钟）
 let autoSaveTimer = null;
 let lastAutoSaveTime = 0;
