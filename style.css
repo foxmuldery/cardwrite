@@ -888,320 +888,6 @@ select:focus, input:focus, textarea:focus {
     }
 }
 
-/* === iPad 设备优化新增代码 === */
-/* iPad设备专用样式 */
-@media only screen and (min-device-width: 768px) and (max-device-width: 1024px), 
-       (min-width: 768px) and (max-width: 1024px) and (pointer: coarse) {
-    /* 基础触摸区域增强 */
-    html {
-        font-size: 18px;
-    }
-    
-    body {
-        touch-action: manipulation;
-    }
-    
-    /* 顶部导航栏优化 */
-    header {
-        padding: 1.2rem 2.5rem;
-    }
-    
-    .header-buttons button {
-        min-height: 50px;
-        min-width: 90px;
-        font-size: 16px;
-        padding: 12px 15px;
-        margin: 0 8px 0 0;
-    }
-    
-    #project-title {
-        height: 50px;
-        min-width: 250px;
-        font-size: 16px;
-        padding: 0 15px;
-    }
-    
-    .script-type-selector {
-        height: 50px;
-        font-size: 16px;
-        padding: 12px 15px;
-    }
-    
-    /* 视图控制按钮 */
-    .view-controls {
-        padding: 20px 0;
-    }
-    
-    .view-btn {
-        min-height: 50px;
-        font-size: 16px;
-        padding: 12px 25px;
-    }
-    
-    /* 板块布局优化 */
-    .board-container {
-        padding: 25px;
-    }
-    
-    /* 改进节拍槽触摸体验 */
-    .beat-slots {
-        padding: 20px;
-        gap: 20px;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-    }
-    
-    .beat-slot {
-        scroll-snap-align: start;
-        margin: 0 20px 0 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    
-    .beat-slot h3 {
-        padding: 15px 10px;
-        height: 50px;
-        font-size: 16px;
-    }
-    
-    .beat-recommended {
-        height: 30px;
-        font-size: 14px;
-    }
-    
-    /* 卡片触摸优化 */
-    .card {
-        padding: 20px 20px 20px 25px;
-        margin-bottom: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .card::before {
-        content: "≡";
-        position: absolute;
-        top: 50%;
-        left: 8px;
-        transform: translateY(-50%);
-        font-size: 18px;
-        color: #aaa;
-        opacity: 0.8;
-    }
-    
-    .card-location {
-        font-size: 17px;
-        margin-bottom: 8px;
-    }
-    
-    .card-description {
-        font-size: 16px;
-        line-height: 1.5;
-    }
-    
-    /* 增强视觉反馈 */
-    .card:active, .beat-slot:active, button:active {
-        transform: scale(0.98);
-        transition: transform 0.1s;
-    }
-    
-    /* 触摸拖动视觉增强 */
-    .touch-hold {
-        transform: scale(1.02);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        transition: all 0.2s ease;
-    }
-    
-    /* 快速添加菜单优化 */
-    .quick-add-menu {
-        width: 70%;
-        max-width: 600px;
-        bottom: auto;
-        right: auto;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-radius: 12px;
-    }
-    
-    .quick-add-header {
-        padding: 20px;
-    }
-    
-    .quick-add-content {
-        padding: 25px;
-    }
-    
-    .quick-add-section label {
-        font-size: 17px;
-        margin-bottom: 12px;
-    }
-    
-    .status-option {
-        padding: 15px;
-        border-radius: 10px;
-    }
-    
-    .status-option:active {
-        transform: scale(0.95);
-        background-color: #e8f7ff;
-    }
-    
-    #quick-add-description {
-        min-height: 150px;
-        font-size: 16px;
-        padding: 15px;
-    }
-    
-    .quick-add-actions button {
-        min-height: 55px;
-        font-size: 17px;
-    }
-    
-    /* 浮动按钮优化 */
-    .floating-add-button {
-        width: 70px;
-        height: 70px;
-        font-size: 36px;
-        right: 40px;
-        bottom: 40px;
-    }
-    
-    .floating-menu-item {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .menu-icon {
-        font-size: 24px;
-    }
-    
-    /* 拖拽删除优化 */
-    .drag-trash-bin {
-        width: 150px;
-        height: 150px;
-        border-radius: 15px;
-    }
-    
-    .trash-icon {
-        font-size: 50px;
-    }
-    
-    /* 模态框优化 */
-    .modal-content {
-        width: 85%;
-        max-width: 700px;
-        padding: 25px;
-        border-radius: 12px;
-    }
-    
-    .modal-close, .close-modal {
-        font-size: 30px;
-        padding: 15px;
-        margin: -15px;
-    }
-    
-    .form-group label {
-        font-size: 17px;
-        margin-bottom: 10px;
-    }
-    
-    .form-actions button {
-        min-height: 55px;
-        font-size: 17px;
-    }
-    
-    /* 表单控件优化 */
-    input, select, textarea {
-        font-size: 16px;
-        padding: 12px;
-        border-radius: 8px;
-    }
-    
-    /* 项目列表优化 */
-    .project-item {
-        padding: 15px;
-    }
-    
-    .project-action-btn {
-        font-size: 14px;
-        padding: 8px 12px;
-        min-height: 40px;
-    }
-}
-
-/* iPad分屏模式优化 */
-@media only screen and (min-width: 600px) and (max-width: 768px) and (pointer: coarse) {
-    .quick-add-menu {
-        width: 85%;
-    }
-    
-    .beat-slot {
-        min-width: 260px;
-        width: 260px;
-    }
-}
-
-/* iPad Pro特定优化 */
-@media only screen and (min-device-width: 1024px) and (max-device-width: 1366px), 
-       (min-width: 1024px) and (max-width: 1366px) and (pointer: coarse) {
-    .board-container {
-        padding: 30px;
-    }
-    
-    .beat-slot {
-        min-width: 350px;
-        width: 350px;
-    }
-    
-    /* 卡片更大的间距 */
-    .card {
-        padding: 25px 25px 25px 35px;
-        margin-bottom: 20px;
-    }
-    
-    /* 横屏模式下展示更多列 */
-    @media (orientation: landscape) {
-        .board.filtered-view .beat-slot {
-            width: calc(33.33% - 20px);
-        }
-    }
-}
-
-/* 触摸设备的提示优化 */
-@media (hover: none) {
-    /* 替代悬停提示的触摸提示机制 */
-    [data-tooltip]:active::before,
-    [data-tooltip]:active::after {
-        opacity: 1;
-        visibility: visible;
-    }
-}
-
-/* 长按触发样式 */
-.touch-dragging {
-    opacity: 0.7;
-    transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    z-index: 10;
-}
-
-/* 突出显示拖放区域 */
-.card-list.drag-highlight {
-    background-color: rgba(52, 152, 219, 0.1);
-    border: 2px dashed #3498db;
-    border-radius: 8px;
-}
-
-/* 增强长按反馈 */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.touch-pulse {
-    animation: pulse 0.5s ease-in-out;
-}
-
 /* 检测 iPad 设备 */
 @media (pointer: coarse) and (min-width: 768px) and (max-width: 1024px) {
     /* 特定的 iPad 优化 */
@@ -1543,4 +1229,119 @@ select:focus, input:focus, textarea:focus {
     top: 100%;
     border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
     margin-top: 0;
+}
+/* 拖拽增强样式 */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #f0f8ff !important; /* 淡蓝色背景 */
+    border: 2px dashed #3498db !important;
+    box-shadow: none !important;
+    transform: scale(0.98);
+    transition: all 0.2s ease;
+}
+
+.sortable-chosen {
+    opacity: 0.9;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+    transform: scale(1.02) rotate(1deg);
+    z-index: 100;
+    transition: all 0.2s ease;
+}
+
+.sortable-drag {
+    opacity: 0.9;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transform: scale(1.02) rotate(1deg);
+}
+
+/* 可放置区域高亮 */
+.beat-slot.drop-target {
+    background-color: rgba(52, 152, 219, 0.1);
+    border: 2px dashed #3498db;
+    transition: all 0.2s ease;
+}
+
+.card-list.drop-target {
+    background-color: rgba(52, 152, 219, 0.15);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* 垃圾桶拖拽动画增强 */
+.drag-trash-bin {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.drag-trash-bin.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.drag-trash-bin.drag-over {
+    transform: scale(1.1);
+    background-color: #e74c3c;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.drag-trash-bin.drag-over .trash-icon {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    animation-iteration-count: infinite;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+    40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+/* 拖拽卡片的动画效果 */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.card.is-dragging {
+    opacity: 0.9;
+    transform: scale(1.02) rotate(1deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+/* 改进的提示消息样式 */
+.toast-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 500;
+  min-width: 200px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-message.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast-success {
+  background: rgba(46, 204, 113, 0.9);
+}
+
+.toast-error {
+  background: rgba(231, 76, 60, 0.9);
+}
+
+.toast-warning {
+  background: rgba(241, 196, 15, 0.9);
+}
+
+.toast-info {
+  background: rgba(52, 152, 219, 0.9);
 }
