@@ -511,15 +511,6 @@ footer {
     gap: 10px;
 }
 
-/* 卡片状态 Emoji */
-.status-emoji {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 5;
-}
 
 /* 确保不同状态的卡片有不同的视觉样式 */
 .card[data-status="confirmed"] {
@@ -591,20 +582,90 @@ footer {
   opacity: 1;
 }
 
-/* 改进的快速添加卡片菜单 */
+/* 快速添加菜单简化样式 */
 .quick-add-menu {
-  position: fixed;
-  bottom: 100px;
-  right: 40px;
-  width: 400px;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.2);
-  z-index: 96;
-  display: none;
-  overflow: hidden;
+    position: fixed;
+    bottom: 100px;
+    right: 40px;
+    width: 400px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.2);
+    z-index: 96;
+    display: none;
+    overflow: hidden;
 }
 
+.quick-add-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #3498db;
+    color: white;
+}
+
+.quick-add-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.close-quick-add {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.quick-add-content {
+    padding: 20px;
+}
+
+.quick-add-section {
+    margin-bottom: 15px;
+}
+
+.quick-add-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.act-beat-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.act-selector {
+    flex: 1;
+}
+
+.beat-selector {
+    flex: 2;
+}
+
+#quick-add-description {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    font-size: 15px;
+    resize: vertical;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.quick-add-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.quick-add-actions button {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+}
 .quick-add-header {
   display: flex;
   justify-content: space-between;
@@ -1578,4 +1639,421 @@ select:focus, input:focus, textarea:focus {
   .trash-text {
       font-size: 16px;
   }
+}
+/* 卡片编辑优化样式 */
+.card-edit-content {
+    padding: 24px;
+    max-width: 550px;
+}
+
+/* 改进卡片状态选择器 */
+.card-status-selector .status-options {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.card-status-selector .status-option {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f8f9fa;
+}
+
+.card-status-selector .status-option:hover {
+    background: #f0f0f0;
+}
+
+.card-status-selector .status-option.selected {
+    border-color: #3498db;
+    background: #e6f7ff;
+    box-shadow: 0 0 0 1px #3498db;
+}
+.location-input {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+#scene-location-type {
+    width: 80px;
+    font-weight: bold;
+}
+
+#scene-location {
+    flex: 1;
+}
+
+#scene-description {
+    min-height: 100px;
+    font-size: 15px;
+    margin-top: 8px;
+    line-height: 1.5;
+}
+
+/* 冲突选项卡样式 */
+.conflict-group {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* 改进冲突部分 */
+.conflict-tabs {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.conflict-tab {
+    padding: 12px 15px;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    background: #f5f5f5;
+    border-right: 1px solid #ddd;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.conflict-tab:last-child {
+    border-right: none;
+}
+
+.conflict-tab.active {
+    background: white;
+    color: #3498db;
+    box-shadow: inset 0 -2px 0 #3498db;
+}
+
+.conflict-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    display: none;
+}
+
+.conflict-input.active {
+    display: block;
+}
+.conflict-input:focus {
+    outline: none;
+}
+
+.conflict-input.active {
+    display: block;
+}
+
+/* 改进情感变化按钮 */
+.emotion-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.emotion-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    font-size: 22px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.emotion-btn:hover {
+    background: #f0f0f0;
+}
+
+.emotion-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+    box-shadow: 0 0 0 1px #3498db;
+}
+/* 按钮样式改进 */
+.primary-btn {
+    background: #2ecc71;
+    font-size: 16px;
+    padding: 10px 24px;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.primary-btn:hover {
+    background: #27ae60;
+}
+
+.secondary-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.secondary-btn:hover {
+    background: #e5e5e5;
+}
+
+.danger-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.danger-btn:hover {
+    background: #c0392b;
+}
+
+/* 调整按钮样式 */
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.primary-btn {
+    background: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.primary-btn:hover {
+    background: #27ae60;
+}
+
+.secondary-btn {
+    background: #f5f7fa;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+    background: #eef2f7;
+}
+
+.danger-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.danger-btn:hover {
+    background: #c0392b;
+}
+
+/* 快速添加优化样式 */
+.quick-add-menu {
+    width: 450px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.quick-add-header {
+    background: #3498db;
+    padding: 16px 20px;
+}
+
+.quick-add-header h3 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.quick-add-content {
+    padding: 20px;
+}
+
+.quick-add-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.quick-status-options {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.quick-status-option {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: #f5f5f5;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-status-option:hover {
+    background: #f0f0f0;
+}
+
+.quick-status-option.selected {
+    border-color: #3498db;
+    background: #ebf5fb;
+}
+
+.quick-add-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.quick-add-actions button {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+}
+
+#quick-add-description {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    font-size: 15px;
+    resize: vertical;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: 8px;
+}
+
+#quick-add-description:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* 触控优化 */
+@media (pointer: coarse) {
+    .status-option, .conflict-tab, .emotion-btn, .quick-status-option {
+        padding: 12px;
+        min-height: 44px;
+    }
+    
+    .emotion-btn, .quick-status-option {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .form-actions button, .quick-add-actions button {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    input, select, textarea {
+        font-size: 16px; /* iOS避免缩放的最小字体 */
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 500px) {
+    .quick-add-menu {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+    
+    .quick-add-content {
+        height: calc(100% - 60px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .quick-add-section:not(:last-child) {
+        flex: 0 0 auto;
+    }
+    
+    #quick-add-description {
+        flex: 1;
+        min-height: 120px;
+    }
+    
+    .quick-add-actions {
+        margin-top: auto;
+        padding-top: 20px;
+    }
+    
+    .quick-add-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 确保emoji正确显示 */
+.status-emoji {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 5px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+.quick-status-option {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+/* 调整剧情内容输入框 */
+#scene-description {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: vertical;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+#scene-description:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }

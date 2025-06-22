@@ -9,7 +9,7 @@ let scriptCards = {
 };
 
 // 常量和配置
-const APP_VERSION = '0.8.1';
+const APP_VERSION = '0.8.3';
 const AUTO_SAVE_INTERVAL = 60000; // 自动保存间隔，单位毫秒（1分钟）
 let autoSaveTimer = null;
 let lastAutoSaveTime = 0;
@@ -211,8 +211,7 @@ function initApp() {
     initTrashBin();
     initInspirationBox();
 
-    // 添加iPad检测和强制应用网格布局
-    detectAndApplyIPadLayout();
+
 }
 
 // 初始化垃圾桶功能
@@ -574,6 +573,131 @@ function setupEventListeners() {
         loadProjectModal.style.display = 'none';
         if (feedbackModal) feedbackModal.style.display = 'none';
     });
+
+
+// 卡片状态选择器
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('status-option') || e.target.parentElement.classList.contains('status-option')) {
+        const option = e.target.classList.contains('status-option') ? e.target : e.target.parentElement;
+        
+        // 更新选中状态
+        document.querySelectorAll('.status-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+        
+        // 更新隐藏输入值
+        document.getElementById('card-status').value = option.getAttribute('data-status');
+    }
+});
+
+// 冲突选项卡交互
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('conflict-tab')) {
+        // 移除所有active类
+        document.querySelectorAll('.conflict-tab').forEach(t => {
+            t.classList.remove('active');
+        });
+        document.querySelectorAll('.conflict-input').forEach(input => {
+            input.classList.remove('active');
+        });
+        
+        // 设置当前选项卡为active
+        e.target.classList.add('active');
+        const field = e.target.getAttribute('data-field');
+        document.getElementById(field).classList.add('active');
+    }
+});
+
+// 情感按钮交互
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('emotion-btn')) {
+        e.preventDefault(); // 防止表单提交
+        
+        // 更新选中状态
+        document.querySelectorAll('.emotion-btn').forEach(b => {
+            b.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // 更新隐藏输入值
+        document.getElementById('emotional-change-type').value = e.target.getAttribute('data-value');
+    }
+});
+
+// 快速添加状态选项
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('quick-status-option')) {
+        // 更新选中状态
+        document.querySelectorAll('.quick-status-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        e.target.classList.add('selected');
+        
+        // 更新隐藏输入值
+        document.getElementById('quick-add-status').value = e.target.getAttribute('data-status');
+    }
+});
+
+
+    // 更多选项按钮
+const moreOptionsBtn = document.getElementById('more-options');
+const moreOptionsMenu = document.getElementById('more-options-menu');
+if (moreOptionsBtn && moreOptionsMenu) {
+    moreOptionsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        moreOptionsMenu.classList.toggle('show');
+    });
+    
+    // 点击其他地方时关闭菜单
+    document.addEventListener('click', function(e) {
+        if (moreOptionsMenu.classList.contains('show') && !moreOptionsMenu.contains(e.target) && e.target !== moreOptionsBtn) {
+            moreOptionsMenu.classList.remove('show');
+        }
+    });
+}
+
+// 深色模式切换
+const themeToggleBtn = document.getElementById('toggle-theme');
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', function() {
+        document.body.classList.toggle('dark-theme');
+        moreOptionsMenu.classList.remove('show');
+        
+        // 你可以保存用户的主题偏好到本地存储
+        if (document.body.classList.contains('dark-theme')) {
+            localStorage.setItem('theme', 'dark');
+            this.textContent = '浅色模式';
+        } else {
+            localStorage.setItem('theme', 'light');
+            this.textContent = '深色模式';
+        }
+    });
+    
+    // 检查用户之前的主题偏好
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.textContent = '浅色模式';
+    }
+}
+
+
+// 帮助和关于按钮
+const helpBtn = document.getElementById('help-button');
+if (helpBtn) {
+    helpBtn.addEventListener('click', function() {
+        moreOptionsMenu.classList.remove('show');
+        alert('帮助文档功能将在后续版本开放');
+    });
+}
+
+const aboutBtn = document.getElementById('about-button');
+if (aboutBtn) {
+    aboutBtn.addEventListener('click', function() {
+        moreOptionsMenu.classList.remove('show');
+        alert('老袁编剧卡片系统 ' + APP_VERSION + '\n开发者: 老袁\n联系: yuanzhe2023@hotmail.com');
+    });
+}
 });
 
     // 保存卡片表单
@@ -623,22 +747,7 @@ function setupEventListeners() {
         });
     });
 
-    // iPad模式切换按钮
-    const toggleBtn = document.getElementById('toggle-ipad-mode');
-    if (toggleBtn) {
-    toggleBtn.addEventListener('click', function() {
-        document.body.classList.toggle('force-ipad-layout');
-        if (document.body.classList.contains('force-ipad-layout')) {
-            applyGridLayout();
-            this.textContent = '恢复默认';
-            this.style.background = '#27ae60';
-        } else {
-            resetLayout();
-            this.textContent = 'iPad模式';
-            this.style.background = '#e74c3c';
-        }
-    });
-}
+
 
 }
 
@@ -647,7 +756,10 @@ function initQuickAdd() {
     const quickAddBtn = document.getElementById('quick-add-btn');
     const quickAddMenu = document.getElementById('quick-add-menu');
     
-    if (!quickAddBtn || !quickAddMenu) return;
+    if (!quickAddBtn || !quickAddMenu) {
+        console.error('快速添加按钮或菜单未找到');
+        return;
+    }
     
     const closeBtn = quickAddMenu.querySelector('.close-quick-add');
     
@@ -658,8 +770,13 @@ function initQuickAdd() {
         generateActBeatSelectors();
         quickAddMenu.style.display = 'block';
         
-        // 初始化状态选择器
-        initStatusOptions();
+        // 清空输入框
+        document.getElementById('quick-add-description').value = '';
+        
+        // 自动聚焦到描述输入框
+        setTimeout(() => {
+            document.getElementById('quick-add-description').focus();
+        }, 100);
     });
     
     // 关闭菜单按钮
@@ -690,6 +807,8 @@ function initQuickAdd() {
         addCardBtn.addEventListener('click', function() {
             saveQuickCard(false);
         });
+    } else {
+        console.error('快速添加保存按钮未找到');
     }
     
     // 添加并创建新卡片按钮
@@ -698,8 +817,35 @@ function initQuickAdd() {
         addAndNewBtn.addEventListener('click', function() {
             saveQuickCard(true);
         });
+    } else {
+        console.error('添加并创建新卡片按钮未找到');
     }
+    
+    // 添加键盘快捷键
+    document.addEventListener('keydown', function(e) {
+        // Esc键关闭菜单
+        if (e.key === 'Escape') {
+            if (quickAddMenu.style.display === 'block') {
+                quickAddMenu.style.display = 'none';
+            }
+            if (cardModal.style.display === 'block') {
+                if (confirm('关闭编辑器？未保存的更改将丢失。')) {
+                    cardModal.style.display = 'none';
+                }
+            }
+        }
+        
+        // Ctrl+Enter或Command+Enter保存
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (cardModal.style.display === 'block') {
+                document.getElementById('save-card').click();
+            } else if (quickAddMenu.style.display === 'block') {
+                document.getElementById('quick-add-save').click();
+            }
+        }
+    });
 }
+
 
 // 初始化状态选项
 function initStatusOptions() {
@@ -1482,25 +1628,67 @@ function openCardModal(cardId, act, beat) {
     document.getElementById('card-act').value = act;
     document.getElementById('card-beat').value = beat;
     
+    // 重置所有状态选择器
+    document.querySelectorAll('.status-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // 重置冲突选项卡
+    document.querySelectorAll('.conflict-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.conflict-input').forEach(input => {
+        input.classList.remove('active');
+    });
+    document.querySelector('.conflict-tab[data-field="protagonist"]').classList.add('active');
+    document.getElementById('protagonist').classList.add('active');
+    
+    // 重置情感按钮
+    document.querySelectorAll('.emotion-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector('.emotion-btn[data-value="positive"]').classList.add('active');
+    
     if (cardId) {
         // 编辑现有卡片
         const card = findCardById(cardId, act, beat);
         if (card) {
             document.getElementById('card-id').value = card.id;
-            document.getElementById('card-status').value = card.status || 'confirmed';
+            
+            // 设置卡片状态
+            const status = card.status || 'confirmed';
+            document.getElementById('card-status').value = status;
+            document.querySelector(`.status-option[data-status="${status}"]`).classList.add('selected');
+            
+            // 设置场景位置
             document.getElementById('scene-location-type').value = card.location.type;
             document.getElementById('scene-location').value = card.location.place;
+            
+            // 设置场景描述
             document.getElementById('scene-description').value = card.description;
+            
+            // 设置冲突
             document.getElementById('protagonist').value = card.conflict.protagonist;
             document.getElementById('goal').value = card.conflict.goal;
             document.getElementById('obstacle').value = card.conflict.obstacle;
-            document.getElementById('emotional-change-type').value = card.emotionalChange;
+            
+            // 设置情感变化
+            const emotionalChange = card.emotionalChange || 'positive';
+            document.getElementById('emotional-change-type').value = emotionalChange;
+            document.querySelector(`.emotion-btn[data-value="${emotionalChange}"]`).classList.add('active');
             document.getElementById('emotional-change-content').value = card.emotionalChangeContent || '';
         }
     } else {
         // 新卡片
         document.getElementById('card-id').value = generateId();
-        document.getElementById('card-status').value = 'confirmed'; // 默认为确认
+        
+        // 默认选中"确认"状态
+        document.getElementById('card-status').value = 'confirmed';
+        document.querySelector('.status-option[data-status="confirmed"]').classList.add('selected');
+        
+        // 默认选中"正向"情感变化
+        document.getElementById('emotional-change-type').value = 'positive';
+        document.querySelector('.emotion-btn[data-value="positive"]').classList.add('active');
         
         // 如果是从特定节拍添加，填充相应的提示文本
         if (beat && beatHints[beat]) {
@@ -1509,8 +1697,12 @@ function openCardModal(cardId, act, beat) {
     }
     
     cardModal.style.display = 'block';
+    
+    // 自动聚焦到场景位置
+    setTimeout(() => {
+        document.getElementById('scene-location').focus();
+    }, 100);
 }
-
 // 查找卡片
 function findCardById(id, act, beat) {
     return scriptCards.acts[act][beat].find(card => card.id === id);
@@ -1577,40 +1769,34 @@ function generateActBeatSelectors() {
     }
 }
 
-// 保存快速创建的卡片
+// 保存快速创建的卡片 - 简化版
 function saveQuickCard(createNew) {
     const actSelector = document.getElementById('quick-add-act');
     const beatSelector = document.getElementById('quick-add-beat');
-    const statusSelector = document.getElementById('quick-add-status');
-    const locationTypeSelector = document.getElementById('quick-add-location-type');
-    const locationInput = document.getElementById('quick-add-location');
     const descriptionInput = document.getElementById('quick-add-description');
     
-    if (!actSelector || !beatSelector || !statusSelector || !locationTypeSelector || !locationInput || !descriptionInput) {
+    if (!actSelector || !beatSelector || !descriptionInput) {
         alert('快速添加功能初始化失败');
         return;
     }
     
     const act = actSelector.value;
     const beat = beatSelector.value;
-    const status = statusSelector.value;
-    const locationType = locationTypeSelector.value;
-    const location = locationInput.value;
     const description = descriptionInput.value;
     
     // 基本验证
-    if (!location || !description) {
-        alert('请填写位置和描述');
+    if (!description) {
+        alert('请填写剧情内容');
         return;
     }
     
-    // 创建卡片对象
+    // 创建卡片对象 - 使用默认值
     const card = {
         id: generateId(),
-        status: status,
+        status: 'confirmed', // 默认为"确认"
         location: {
-            type: locationType,
-            place: location
+            type: 'INT', // 默认为INT
+            place: '' // 默认为空
         },
         description: description,
         conflict: {
@@ -1633,10 +1819,9 @@ function saveQuickCard(createNew) {
     updateBeatSlotStatus();
     
     if (createNew) {
-        // 只清空位置和描述，保留其他字段
-        locationInput.value = '';
+        // 只清空描述，保留其他字段
         descriptionInput.value = '';
-        locationInput.focus();
+        descriptionInput.focus();
     } else {
         // 关闭菜单
         document.getElementById('quick-add-menu').style.display = 'none';
@@ -1644,7 +1829,7 @@ function saveQuickCard(createNew) {
     
     // 提示用户
     const actionText = createNew ? '已添加卡片，可继续创建' : '已添加卡片';
-    showToast(actionText);
+    showToast(actionText, 'success');
 }
 
 // 显示简短的提示消息
@@ -1740,8 +1925,10 @@ function saveCard() {
     
     // 关闭模态框
     cardModal.style.display = 'none';
+    
+    // 显示保存成功提示
+    showToast('卡片已保存', 'success');
 }
-
 // 复制卡片
 function duplicateCard() {
     const id = document.getElementById('card-id').value;
@@ -2424,78 +2611,6 @@ function exportOutline() {
     a.click();
     document.body.removeChild(a);
 }
-
-// 检测并应用iPad布局
-function detectAndApplyIPadLayout() {
-    // 检测是否是iPad
-    const isIPad = 
-        (navigator.userAgent.includes('iPad') || 
-        (navigator.userAgent.includes('Macintosh') && 'ontouchend' in document)) ||
-        (window.innerWidth >= 768 && window.innerWidth <= 1366 && 'ontouchend' in document);
-    
-    if (isIPad) {
-        console.log('检测到iPad设备，应用优化布局');
-        document.body.classList.add('ipad-device');
-        
-        // 强制应用网格布局
-        setTimeout(function() {
-            applyGridLayout();
-            // 监听窗口大小变化，重新应用布局
-            window.addEventListener('resize', function() {
-                // 使用防抖动，避免频繁触发
-                clearTimeout(window.resizeTimer);
-                window.resizeTimer = setTimeout(function() {
-                    applyGridLayout();
-                }, 250);
-            });
-        }, 100);
-    }
-}
-
-// 强制应用网格布局
-function applyGridLayout() {
-    console.log('应用网格布局');
-    const beatSlotsElements = document.querySelectorAll('.beat-slots');
-    beatSlotsElements.forEach(container => {
-        // 强制应用网格布局
-        container.style.display = 'grid';
-        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
-        container.style.gap = '15px';
-        container.style.flexDirection = 'unset';
-        container.style.overflowX = 'visible';
-        
-        // 调整子元素
-        container.querySelectorAll('.beat-slot').forEach(slot => {
-            slot.style.minWidth = 'unset';
-            slot.style.width = '100%';
-            slot.style.margin = '0';
-        });
-    });
-    
-    // 重新初始化拖拽
-    setTimeout(initSortable, 200);
-}
-
-// 恢复默认布局
-function resetLayout() {
-    const beatSlotsElements = document.querySelectorAll('.beat-slots');
-    beatSlotsElements.forEach(container => {
-        container.style.display = 'flex';
-        container.style.gridTemplateColumns = '';
-        container.style.gap = '';
-        container.style.flexDirection = '';
-        container.style.overflowX = 'auto';
-        
-        container.querySelectorAll('.beat-slot').forEach(slot => {
-            slot.style.minWidth = '250px';
-            slot.style.width = '250px';
-            slot.style.margin = '0 10px';
-        });
-    });
-    
-    setTimeout(initSortable, 200);
-}
-
 
 
 // 当页面加载完成时初始化应用
