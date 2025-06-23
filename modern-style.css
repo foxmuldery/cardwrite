@@ -74,7 +74,7 @@ header {
 
 /* 脚本类型选择器 - 更小的宽度 */
 .script-type-selector {
-    background: rgba(255, 255, 255, 0.1);
+    background: #3498db; /* 使用主题蓝色背景 */    
     border: none;
     color: white;
     padding: 0.4rem 0.5rem;
