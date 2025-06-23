@@ -1592,3 +1592,26 @@ textarea {
         border: 1px solid #eee !important;
     }
 }
+
+/* 将此代码添加到modern-style.css文件的末尾 */
+
+/* 大屏幕优化（大于1366px） */
+@media only screen and (min-width: 1367px) {
+    .beat-slots {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .beat-slot {
+        min-width: unset;
+        width: 100%;
+        height: auto;
+    }
+    
+    .card-list {
+        height: auto;
+        min-height: 150px;
+    }
+}
