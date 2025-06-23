@@ -1615,3 +1615,39 @@ textarea {
         min-height: 150px;
     }
 }
+
+/* 添加到您的CSS文件末尾，以覆盖之前的单幕视图样式 */
+.board.filtered-view .beat-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    flex-wrap: unset;
+    justify-content: unset;
+}
+
+.board.filtered-view .beat-slot {
+    width: 100%;
+    min-width: unset;
+}
+
+
+/* 大屏幕下的单幕视图优化 */
+@media only screen and (min-width: 1367px) {
+    .board.filtered-view .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+/* 中等屏幕下的单幕视图优化 */
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+    .board.filtered-view .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+/* 小屏幕下的单幕视图优化 */
+@media only screen and (max-width: 767px) {
+    .board.filtered-view .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
