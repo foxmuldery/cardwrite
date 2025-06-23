@@ -1651,3 +1651,327 @@ textarea {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     }
 }
+
+/* ==========================================
+   综合修复方案 - 添加到CSS文件末尾
+   ========================================== */
+
+/* 1. 统一网格布局 - 解决大屏幕和单幕视图布局问题 */
+.beat-slots {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 20px !important;
+    padding: 20px !important;
+    overflow-x: visible !important;
+    flex-direction: unset !important;
+    min-height: unset !important;
+    height: auto !important;
+    width: auto !important;
+}
+
+.beat-slot {
+    min-width: unset !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* 根据屏幕尺寸调整网格 */
+@media only screen and (min-width: 1367px) {
+    .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1366px) {
+    .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .beat-slots {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+        gap: 15px !important;
+        padding: 15px !important;
+    }
+}
+
+/* 单幕视图覆盖样式 */
+.board.filtered-view .beat-slots {
+    display: grid !important;
+    flex-wrap: unset !important;
+    justify-content: unset !important;
+}
+
+.board.filtered-view .beat-slot {
+    width: 100% !important;
+    min-width: unset !important;
+}
+
+/* 2. 修复导航栏选择器文字颜色问题 */
+.script-type-selector {
+    background: rgba(0, 0, 0, 0.25) !important; /* 深色背景 */
+    color: white !important; /* 白色文字 */
+    border: 1px solid rgba(255, 255, 255, 0.3) !important; /* 添加边框 */
+}
+
+.script-type-selector:hover {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.script-type-selector option {
+    background-color: #2c3e50 !important;
+    color: white !important;
+    padding: 8px !important;
+}
+
+/* 3. 增强情感变化按钮对比度 */
+.emotion-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    border: 2px solid #555 !important;
+    background: white !important;
+    color: #333 !important; /* 确保文字颜色深 */
+    font-size: 26px !important; /* 更大字号 */
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important; /* 添加阴影增强边界 */
+}
+
+.emotion-btn:hover {
+    background: #f0f0f0 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
+}
+
+.emotion-btn.active {
+    background: #3498db !important;
+    color: white !important;
+    border-color: #2980b9 !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3) !important;
+}
+
+/* 深色模式情感按钮 */
+body.dark-theme .emotion-btn {
+    background: #373737 !important;
+    color: #fff !important;
+    border-color: #555 !important;
+}
+
+body.dark-theme .emotion-btn:hover {
+    background: #444 !important;
+}
+
+body.dark-theme .emotion-btn.active {
+    background: #3498db !important;
+    color: white !important;
+    border-color: #2980b9 !important;
+}
+
+/* 4. 修复低分辨率设备卡片编辑界面显示问题 */
+/* 模态框滚动支持 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow-y: auto !important; /* 允许模态背景滚动 */
+    padding: 10px 0 !important;
+    box-sizing: border-box;
+    align-items: flex-start !important; /* 从顶部开始对齐 */
+}
+
+.modal-content {
+    margin: 10px auto !important; /* 减小上边距 */
+    max-height: none !important; /* 移除可能限制高度的设置 */
+}
+
+.modal-content.card-edit-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important; /* 启用垂直滚动 */
+    padding-bottom: 20px !important; /* 确保底部有足够空间 */
+}
+
+/* 优化表单布局 - 常规调整 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* 针对小屏幕优化表单 */
+@media (max-height: 700px) {
+    /* 减小表单组间距 */
+    .form-group {
+        margin-bottom: 10px !important;
+    }
+    
+    /* 减小标签和输入框的间距 */
+    .form-group label {
+        margin-bottom: 3px !important;
+        font-size: 14px !important;
+    }
+    
+    /* 减小输入框内边距 */
+    input, select, textarea {
+        padding: 6px 8px !important;
+    }
+    
+    /* 减小文本区域高度 */
+    #scene-description {
+        min-height: 70px !important;
+    }
+    
+    /* 紧凑情感按钮 */
+    .emotion-btn {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 18px !important;
+    }
+    
+    /* 紧凑冲突选项卡 */
+    .conflict-tab {
+        padding: 8px 10px !important;
+        font-size: 14px !important;
+    }
+    
+    /* 紧凑操作按钮区域 */
+    .form-actions {
+        margin-top: 15px !important;
+    }
+}
+
+/* 极小屏幕的特殊处理 */
+@media (max-height: 600px) {
+    /* 更紧凑的标题 */
+    .modal-content h2 {
+        font-size: 18px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .form-group {
+        margin-bottom: 8px !important;
+    }
+    
+    .conflict-tab {
+        padding: 6px 8px !important;
+        font-size: 13px !important;
+    }
+    
+    .conflict-input {
+        padding: 8px !important;
+    }
+    
+    /* 确保按钮可见和可点击 */
+    .form-actions {
+        padding-top: 10px !important;
+        padding-bottom: 5px !important;
+    }
+    
+    /* 调整按钮大小 */
+    .form-actions button {
+        padding: 8px 16px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* 确保操作按钮始终可见 */
+.form-actions {
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    padding: 15px 0 5px !important;
+    margin-top: 15px !important;
+    border-top: 1px solid #eee !important;
+    z-index: 10 !important;
+}
+
+/* 深色模式下的表单操作区 */
+body.dark-theme .form-actions {
+    background: #2d3748 !important;
+    border-top-color: #4a5568 !important;
+}
+
+/* 5. 优化按钮样式 */
+.primary-btn, #save-card {
+    background: #2ecc71 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 10px 24px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+
+.primary-btn:hover, #save-card:hover {
+    background: #27ae60 !important;
+}
+
+.secondary-btn, #duplicate-card {
+    background: #f5f7fa !important;
+    color: #444 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.secondary-btn:hover, #duplicate-card:hover {
+    background: #eef2f7 !important;
+}
+
+.danger-btn, #delete-card {
+    background: #e74c3c !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+
+.danger-btn:hover, #delete-card:hover {
+    background: #c0392b !important;
+}
+
+/* 深色模式按钮 */
+body.dark-theme .secondary-btn, 
+body.dark-theme #duplicate-card {
+    background: #4a5568 !important;
+    color: #e2e8f0 !important;
+    border-color: #2d3748 !important;
+}
+
+body.dark-theme .secondary-btn:hover, 
+body.dark-theme #duplicate-card:hover {
+    background: #718096 !important;
+}
+
+/* 6. 额外的触控优化 */
+@media (pointer: coarse) {
+    /* 增大按钮点击区域 */
+    button, .add-card-btn, .card, select, input[type="submit"] {
+        min-height: 44px !important;
+    }
+    
+    /* 触摸反馈 */
+    button:active, .card:active, .add-card-btn:active, 
+    .floating-menu-item:active, .view-btn:active {
+        transform: scale(0.97) !important;
+        opacity: 0.9 !important;
+        transition: transform 0.1s ease, opacity 0.1s ease !important;
+    }
+}
