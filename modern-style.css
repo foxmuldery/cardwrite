@@ -1975,3 +1975,30 @@ body.dark-theme #duplicate-card:hover {
         transition: transform 0.1s ease, opacity 0.1s ease !important;
     }
 }
+
+/* 添加卡片按钮优化 */
+.add-card-btn {
+    position: relative;
+    z-index: 10;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.add-card-btn:hover {
+    background-color: #2980b9 !important;
+    color: white !important;
+}
+
+/* 增加点击效果 */
+.add-card-btn:active {
+    transform: scale(0.95);
+}
+
+/* 确保模态框正常显示 */
+.modal {
+    z-index: 1000 !important;
+}
+
+.modal-content {
+    z-index: 1001 !important;
+}
