@@ -10,8 +10,9 @@
 
 ## 在线使用
 
-- 主地址（GitHub Pages）：<https://foxmuldery.github.io/cardwrite/>
-- 自定义域名：`https://cards.foxlaoy.com/` —— 见 [域名修复记录](docs/DOMAIN.md)（需要先在 Cloudflare 加一条 CNAME，详见文档）
+- 主站（Cloudflare Pages）：<https://cardwrite.pages.dev/>
+- 自定义域名：<https://cards.foxlaoy.com/> —— 已挂到 Pages 项目，等待一条 CNAME，见 [域名修复记录](docs/DOMAIN.md)
+- GitHub Pages 镜像：<https://foxmuldery.github.io/cardwrite/>
 
 > ⚠️ 旧地址 `cards.laoyuanyingshi.com` 已于 2026-09 被劫持为垃圾站，**不要再使用，也不要在那里输入任何内容**。处理步骤见 [docs/DOMAIN.md](docs/DOMAIN.md)。
 
@@ -20,8 +21,9 @@
 | 项目 | 状态 |
 | --- | --- |
 | v1.0.0 代码 | 已合并到 `main` |
-| GitHub Pages | 已上线：<https://foxmuldery.github.io/cardwrite/> |
-| `cards.foxlaoy.com` | 代码侧已就绪，等待在 Cloudflare 添加 CNAME 后启用 |
+| Cloudflare Pages | 已上线：<https://cardwrite.pages.dev/> |
+| GitHub Pages | 同版本镜像：<https://foxmuldery.github.io/cardwrite/> |
+| `cards.foxlaoy.com` | 已挂到 Pages 项目，等待 CNAME 记录后自动签发证书 |
 | `cards.laoyuanyingshi.com` | 已失效，等待域名控制权恢复 |
 
 ## 功能
@@ -81,19 +83,23 @@ python3 -m http.server 8080
 
 仓库是纯静态站点，根目录即发布目录。
 
-**GitHub Pages**（当前使用）
+**Cloudflare Pages**（当前主站）
 
-1. Settings → Pages → Source 选择 `Deploy from a branch`，分支 `main`、目录 `/ (root)`。
-2. 或者用命令行：
+项目名 `cardwrite`，直接上传静态文件：
 
 ```bash
-gh api -X POST repos/foxmuldery/cardwrite/pages \
-  -f 'source[branch]=main' -f 'source[path]=/'
+npx wrangler pages deploy dist --project-name cardwrite --branch main
 ```
+
+`_headers` 已配置安全与缓存响应头（GitHub Pages 会忽略该文件）。
+
+**GitHub Pages**（镜像）
+
+Settings → Pages → Source 选择 `Deploy from a branch`，分支 `main`、目录 `/ (root)`。仓库根目录的 `.nojekyll` 已就位。
 
 **自定义域名**
 
-在域名 DNS 添加 `CNAME  cards  foxmuldery.github.io`，然后在仓库根目录放一个内容为 `cards.foxlaoy.com` 的 `CNAME` 文件，并在 Pages 设置里勾选 Enforce HTTPS。详见 [docs/DOMAIN.md](docs/DOMAIN.md)。
+在 Cloudflare 的 `foxlaoy.com` 区域添加 `CNAME  cards → cardwrite.pages.dev`（代理开启），Pages 项目会自动校验并签发证书。不需要 GitHub 的 `CNAME` 文件。详见 [docs/DOMAIN.md](docs/DOMAIN.md)。
 
 ## 目录
 

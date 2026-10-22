@@ -33,11 +33,15 @@ curl -s https://rdap.verisign.com/com/v1/domain/laoyuanyingshi.com | jq '.events
 
 ## 现在用什么地址
 
-已经部署到 GitHub Pages，立刻可用：
+已完成 Cloudflare Pages 部署，立刻可用：
 
-**https://foxmuldery.github.io/cardwrite/**
+**https://cardwrite.pages.dev/**
 
-同时已把 `apppages` 工具集里「老袁编剧卡片系统」的入口从旧域名改成上面的地址（main 与 gh-pages 两个分支都已更新，2026-10-22 生效），避免访客继续落到垃圾站。
+GitHub Pages 同版本镜像：**https://foxmuldery.github.io/cardwrite/**
+
+`cards.foxlaoy.com` 已经挂到 Cloudflare Pages 项目 `cardwrite` 上，当前状态 `pending`，提示 `CNAME record not set`；只差一条 DNS 记录。
+
+同时已把 `apppages` 工具集里「老袁编剧卡片系统」的入口从旧域名改成可用地址（main 与 gh-pages 两个分支都已更新，2026-10-22 生效），避免访客继续落到垃圾站。
 
 ## 切到 `cards.foxlaoy.com`（推荐）
 
@@ -49,30 +53,20 @@ curl -s https://rdap.verisign.com/com/v1/domain/laoyuanyingshi.com | jq '.events
 
 | 类型 | 名称 | 内容 | 代理状态 |
 | --- | --- | --- | --- |
-| CNAME | `cards` | `foxmuldery.github.io` | **仅 DNS（灰色云朵）** |
+| CNAME | `cards` | `cardwrite.pages.dev` | **代理开启（橙色云朵）** |
 
-> 必须灰云。橙云代理会让 GitHub 无法签发证书，出现 525 / 重定向循环。
+> 这里和 GitHub Pages 不同：Cloudflare Pages 的自定义域名要橙云，由 Cloudflare 统一签发证书。灰云会停在 `pending`。
 >
-> 顺带一提：`foxlaoy.com` 的根域（apex）目前 TLS 握手失败（A 记录指向 `178.128.137.126`，疑似源站证书/服务异常），`www` 走 Ghost。子域（`starcard.foxlaoy.com` 等）经 Cloudflare 正常。`cards` 用独立 CNAME 即可，不受根域问题影响。
+> 区域直达链接：<https://dash.cloudflare.com/59a042b894c6a126a47d798937589d5c/dns/records>
 
-### 2. 仓库里声明域名
+### 2. 等 Pages 自动校验
 
-在仓库根目录新建 `CNAME` 文件，内容一行：
+记录生效后，Pages 项目的 `cards.foxlaoy.com` 会从 `pending` 变为 `active`，证书通常 1–5 分钟签发。不需要在仓库里放 `CNAME` 文件。
 
-```
-cards.foxlaoy.com
-```
-
-提交后 GitHub Pages 会自动签发 Let's Encrypt 证书（通常 1–10 分钟）。
-
-### 3. 打开 HTTPS
-
-仓库 Settings → Pages → 勾选 **Enforce HTTPS**。
-
-### 4. 验证
+### 3. 验证
 
 ```bash
-dig +short cards.foxlaoy.com          # 应返回 185.199.108-111.153
+dig +short cards.foxlaoy.com          # 应返回 Cloudflare 代理 IP
 curl -sI https://cards.foxlaoy.com/   # 200，且证书有效
 ```
 
@@ -84,5 +78,6 @@ curl -sI https://cards.foxlaoy.com/   # 200，且证书有效
 
 ## 备注
 
-- GitHub Pages 对自定义域名要求 DNS 记录存在后再在仓库放 `CNAME`，否则 `github.io` 地址会 301 到一个还不存在的域名。
-- 本仓库的 `CNAME` 文件故意**暂未添加**，等 DNS 记录就绪后再加，避免把当前可用的 Pages 地址弄坏。
+- 当前主站是 Cloudflare Pages 项目 `cardwrite`（直接上传），GitHub Pages 作为同版本镜像。
+- 以后更新代码时，两边都要发：`git push` 更新 GitHub Pages，`npx wrangler pages deploy dist --project-name cardwrite --branch main` 更新主站。
+- `foxlaoy.com` 的根域（apex）目前 TLS 握手失败（A 记录指向 `178.128.137.126`），`www` 走 Ghost；子域（`starcard.foxlaoy.com` 等）正常。`cards` 是独立 CNAME，不受根域问题影响。
