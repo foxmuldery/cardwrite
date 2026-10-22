@@ -1,0 +1,19 @@
+{
+  "name": "老袁编剧卡片系统",
+  "short_name": "编剧卡片",
+  "description": "把故事结构摊在桌面上：救猫咪节拍表 + 兔狲文化节拍表，离线可用的编剧卡片工具。",
+  "lang": "zh-Hans",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4efe5",
+  "theme_color": "#f4efe5",
+  "categories": ["productivity", "writing"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
