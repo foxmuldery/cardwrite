@@ -552,6 +552,8 @@ body.is-dragging .card:hover { transform: none; }
 .dialog::backdrop { background: rgba(24, 18, 12, .46); backdrop-filter: blur(3px); }
 html[data-theme="dark"] .dialog::backdrop { background: rgba(0, 0, 0, .62); }
 .dialog[open] { display: flex; flex-direction: column; animation: pop .18s var(--ease); }
+.dialog > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.dialog__head, .dialog__foot { flex: 0 0 auto; }
 .dialog__head {
   display: flex; align-items: center; gap: 12px;
   padding: 15px 18px 13px 22px;
@@ -562,6 +564,7 @@ html[data-theme="dark"] .dialog::backdrop { background: rgba(0, 0, 0, .62); }
 .dialog__body {
   padding: 18px 22px;
   display: flex; flex-direction: column; gap: 15px;
+  flex: 1 1 auto; min-height: 0;
   overflow: auto; overscroll-behavior: contain;
 }
 .dialog__foot {
