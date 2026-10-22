@@ -4,12 +4,25 @@
 
 纯静态、无构建、无后端。所有数据只存在你自己的浏览器里。
 
+![卡片板](docs/preview-board.jpg)
+
+![结构诊断](docs/preview-diagnostics.jpg)
+
 ## 在线使用
 
 - 主地址（GitHub Pages）：<https://foxmuldery.github.io/cardwrite/>
 - 自定义域名：`https://cards.foxlaoy.com/` —— 见 [域名修复记录](docs/DOMAIN.md)（需要先在 Cloudflare 加一条 CNAME，详见文档）
 
 > ⚠️ 旧地址 `cards.laoyuanyingshi.com` 已于 2026-09 被劫持为垃圾站，**不要再使用，也不要在那里输入任何内容**。处理步骤见 [docs/DOMAIN.md](docs/DOMAIN.md)。
+
+### 当前状态
+
+| 项目 | 状态 |
+| --- | --- |
+| v1.0.0 代码 | 已合并到 `main` |
+| GitHub Pages | 已上线：<https://foxmuldery.github.io/cardwrite/> |
+| `cards.foxlaoy.com` | 代码侧已就绪，等待在 Cloudflare 添加 CNAME 后启用 |
+| `cards.laoyuanyingshi.com` | 已失效，等待域名控制权恢复 |
 
 ## 功能
 
