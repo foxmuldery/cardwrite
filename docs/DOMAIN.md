@@ -37,6 +37,8 @@ curl -s https://rdap.verisign.com/com/v1/domain/laoyuanyingshi.com | jq '.events
 
 **https://foxmuldery.github.io/cardwrite/**
 
+同时已把 `apppages` 工具集里「老袁编剧卡片系统」的入口从旧域名改成上面的地址（main 与 gh-pages 两个分支都已更新，2026-10-22 生效），避免访客继续落到垃圾站。
+
 ## 切到 `cards.foxlaoy.com`（推荐）
 
 `foxlaoy.com` 仍在你的 Cloudflare 账号下且工作正常（`starcard.foxlaoy.com` 等在线），用它做新入口最稳。
@@ -50,6 +52,8 @@ curl -s https://rdap.verisign.com/com/v1/domain/laoyuanyingshi.com | jq '.events
 | CNAME | `cards` | `foxmuldery.github.io` | **仅 DNS（灰色云朵）** |
 
 > 必须灰云。橙云代理会让 GitHub 无法签发证书，出现 525 / 重定向循环。
+>
+> 顺带一提：`foxlaoy.com` 的根域（apex）目前 TLS 握手失败（A 记录指向 `178.128.137.126`，疑似源站证书/服务异常），`www` 走 Ghost。子域（`starcard.foxlaoy.com` 等）经 Cloudflare 正常。`cards` 用独立 CNAME 即可，不受根域问题影响。
 
 ### 2. 仓库里声明域名
 
