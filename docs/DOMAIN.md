@@ -1,5 +1,8 @@
 # 域名修复记录
 
+> **2026-10-22 已恢复上线：<https://cards.foxlaoy.com/>**
+> Cloudflare Pages 项目 `cardwrite` + 自定义域名 + 证书均已生效；旧域名仍是被劫持状态，不要使用。
+
 ## 结论
 
 `cards.laoyuanyingshi.com` 已经不可用，而且是**恶意替换**，不是简单的配置错误：
@@ -33,48 +36,43 @@ curl -s https://rdap.verisign.com/com/v1/domain/laoyuanyingshi.com | jq '.events
 
 ## 现在用什么地址
 
-已完成 Cloudflare Pages 部署，立刻可用：
+正式地址（2026-10-22 起）：**<https://cards.foxlaoy.com/>**
 
-**https://cardwrite.pages.dev/**
+- 源站：Cloudflare Pages 项目 `cardwrite`，<https://cardwrite.pages.dev/>
+- 镜像：GitHub Pages，<https://foxmuldery.github.io/cardwrite/>
+- 证书：Google Trust Services，`foxlaoy.com` 通配证书，Cloudflare 边缘终止 TLS
 
-GitHub Pages 同版本镜像：**https://foxmuldery.github.io/cardwrite/**
+验证结果：
 
-`cards.foxlaoy.com` 已经挂到 Cloudflare Pages 项目 `cardwrite` 上，当前状态 `pending`，提示 `CNAME record not set`；只差一条 DNS 记录。
-
-同时已把 `apppages` 工具集里「老袁编剧卡片系统」的入口从旧域名改成可用地址（main 与 gh-pages 两个分支都已更新，2026-10-22 生效），避免访客继续落到垃圾站。
-
-## 切到 `cards.foxlaoy.com`（推荐）
-
-`foxlaoy.com` 仍在你的 Cloudflare 账号下且工作正常（`starcard.foxlaoy.com` 等在线），用它做新入口最稳。
-
-### 1. Cloudflare DNS
-
-在 `foxlaoy.com` 区域添加：
-
-| 类型 | 名称 | 内容 | 代理状态 |
-| --- | --- | --- | --- |
-| CNAME | `cards` | `cardwrite.pages.dev` | **代理开启（橙色云朵）** |
-
-> 这里和 GitHub Pages 不同：Cloudflare Pages 的自定义域名要橙云，由 Cloudflare 统一签发证书。灰云会停在 `pending`。
->
-> 区域直达链接：<https://dash.cloudflare.com/59a042b894c6a126a47d798937589d5c/dns/records>
-
-### 2. 等 Pages 自动校验
-
-记录生效后，Pages 项目的 `cards.foxlaoy.com` 会从 `pending` 变为 `active`，证书通常 1–5 分钟签发。不需要在仓库里放 `CNAME` 文件。
-
-### 3. 验证
-
-```bash
-dig +short cards.foxlaoy.com          # 应返回 Cloudflare 代理 IP
-curl -sI https://cards.foxlaoy.com/   # 200，且证书有效
+```text
+GET https://cards.foxlaoy.com/           200
+GET https://cards.foxlaoy.com/assets/app.css  200
+证书 CN=foxlaoy.com，有效期至 2026-11-29
+Service Worker scope = https://cards.foxlaoy.com/
 ```
 
-### 5. 收尾
 
-- 更新所有指向旧域名的入口（`apppages` 里的「老袁编剧卡片系统」卡片目前仍链到 `cards.laoyuanyingshi.com`，需改成 `https://cards.foxlaoy.com/`）。
-- 在旧域名彻底收回后，把 `laoyuanyingshi.com` 全站 301 到新域名，再观察一段时间。
-- 如果坚持继续用 `laoyuanyingshi.com`：先恢复注册商 / Cloudflare 控制权，重新添加指向 `foxmuldery.github.io` 的 CNAME，并在 Pages 里把自定义域名改成它。**在账号安全未确认前不建议这样做。**
+## 切换过程（已完成）
+
+`foxlaoy.com` 的 Cloudflare 账号工作正常（`starcard.foxlaoy.com`、`apps.foxlaoy.com` 等在线），用它做新入口。
+
+1. 把原 `cardwrite` 项目（2025-06 创建，之前一直指向旧版）接到新构建，部署到 <https://cardwrite.pages.dev/>。
+2. 在 Pages 项目里添加自定义域名 `cards.foxlaoy.com`（`zone_tag: 59a042b894c6a126a47d798937589d5c`）。
+3. 在 `foxlaoy.com` 区域添加 `CNAME cards → cardwrite.pages.dev`，代理开启。
+4. Pages 完成校验，Cloudflare 边缘签发证书，域名生效。
+5. 把 `apppages` 入口、仓库 homepage、canonical / OG 全部切到 `https://cards.foxlaoy.com/`。
+
+### 验证
+
+```bash
+dig +short cards.foxlaoy.com          # 104.21.9.160 / 172.67.160.71
+curl -sI https://cards.foxlaoy.com/   # 200
+```
+
+### 后续
+
+- 旧域名彻底收回后，可以把 `laoyuanyingshi.com` 全站 301 到新域名。
+- 如果坚持继续用 `laoyuanyingshi.com`：先恢复注册商 / Cloudflare 控制权，再把它的 CNAME 指向 `cardwrite.pages.dev`。**在账号安全未确认前不建议这样做。**
 
 ## 备注
 

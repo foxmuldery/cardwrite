@@ -10,8 +10,8 @@
 
 ## 在线使用
 
-- 主站（Cloudflare Pages）：<https://cardwrite.pages.dev/>
-- 自定义域名：<https://cards.foxlaoy.com/> —— 已挂到 Pages 项目，等待一条 CNAME，见 [域名修复记录](docs/DOMAIN.md)
+- 正式地址：**<https://cards.foxlaoy.com/>**
+- Cloudflare Pages 源站：<https://cardwrite.pages.dev/>
 - GitHub Pages 镜像：<https://foxmuldery.github.io/cardwrite/>
 
 > ⚠️ 旧地址 `cards.laoyuanyingshi.com` 已于 2026-09 被劫持为垃圾站，**不要再使用，也不要在那里输入任何内容**。处理步骤见 [docs/DOMAIN.md](docs/DOMAIN.md)。
@@ -21,10 +21,10 @@
 | 项目 | 状态 |
 | --- | --- |
 | v1.0.0 代码 | 已合并到 `main` |
+| 正式域名 | 已生效：<https://cards.foxlaoy.com/> |
 | Cloudflare Pages | 已上线：<https://cardwrite.pages.dev/> |
 | GitHub Pages | 同版本镜像：<https://foxmuldery.github.io/cardwrite/> |
-| `cards.foxlaoy.com` | 已挂到 Pages 项目，等待 CNAME 记录后自动签发证书 |
-| `cards.laoyuanyingshi.com` | 已失效，等待域名控制权恢复 |
+| `cards.laoyuanyingshi.com` | 已失效，等待域名控制权恢复（与主站无关） |
 
 ## 功能
 
