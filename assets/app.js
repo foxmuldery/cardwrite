@@ -470,7 +470,7 @@
               '<span class="beat__count" title="建议 ' + rec + ' 张">0</span>' +
             '</header>' +
             (hint ? '<p class="beat__hint" title="' + escapeHtml(hint) + '">' + escapeHtml(hint) + '</p>' : '') +
-            '<div class="cards" data-act="' + act.id + '" data-beat="' + beat.id + '" aria-label="' + escapeHtml(beat.title) + '的卡片"></div>' +
+            '<div class="cards" role="group" data-act="' + act.id + '" data-beat="' + beat.id + '" aria-label="' + escapeHtml(beat.title) + '的卡片"></div>' +
             '<button type="button" class="beat__add" data-act="' + act.id + '" data-beat="' + beat.id + '">' +
               '<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加' +
             '</button>' +
