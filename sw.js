@@ -1,5 +1,5 @@
 /* 老袁编剧卡片系统 · 离线缓存 */
-const VERSION = 'cardwrite-v1.0.0';
+const VERSION = 'cardwrite-v1.0.1';
 const APP_SHELL = [
   './',
   './index.html',

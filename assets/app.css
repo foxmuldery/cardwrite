@@ -807,6 +807,7 @@ html[data-theme="dark"] .dialog::backdrop { background: rgba(0, 0, 0, .62); }
   .emotion-row .segmented button { flex: 1; }
   .statusbar { display: none; }
   .toast { font-size: 12px; }
+  .btn--primary kbd { display: none; }
 }
 @media (max-width: 420px) {
   .actions #btn-help { display: none; }
