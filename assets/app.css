@@ -126,6 +126,7 @@ kbd {
 /* ---------- 顶栏 ---------- */
 .appbar {
   position: sticky; top: 0; z-index: 40;
+  background: var(--bg);
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: saturate(140%) blur(14px);
   -webkit-backdrop-filter: saturate(140%) blur(14px);
@@ -237,6 +238,7 @@ html[data-theme="dark"] .icon--moon { display: block; }
   display: flex; align-items: center; gap: 18px;
   min-height: var(--toolbar);
   padding: 8px clamp(12px, 2.2vw, 28px);
+  background: var(--bg);
   background: color-mix(in srgb, var(--bg) 86%, transparent);
   backdrop-filter: saturate(140%) blur(12px);
   -webkit-backdrop-filter: saturate(140%) blur(12px);
@@ -498,6 +500,7 @@ body.is-dragging .card:hover { transform: none; }
   display: inline-flex; align-items: center; gap: 6px;
   height: 38px; padding: 0 12px;
   border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(10px);
   color: var(--ink-soft); font-size: 12px;
