@@ -16,7 +16,7 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 代码 | v1.0.0，21 个提交，`main` 为唯一开发分支 |
+| 代码 | v1.0.0，`main` 为唯一开发分支 |
 | 主站 | `cards.foxlaoy.com` 已生效，HTTPS 正常 |
 | 源站 | Cloudflare Pages 项目 `cardwrite` |
 | 镜像 | GitHub Pages `foxmuldery.github.io/cardwrite` |
@@ -233,7 +233,7 @@ GitHub main ──push──▶ GitHub Pages（镜像）
 - Settings → Pages → Deploy from a branch：`main` / root。
 - 推送 `main` 自动构建，约 30–60 秒。
 - `.nojekyll` 已存在；`_headers` 会被忽略。
-- 当前构建：commit `72be2ec`，`canonical` 已指向正式域名。
+- 以 `main` 最新提交为准构建，`canonical` 已指向正式域名。
 
 ### 4.3 Cloudflare Pages（主站）
 
@@ -431,6 +431,7 @@ f160e05  README 预览与部署状态
 5596359  Cloudflare 安全响应头
 89f49e7  主站切 Cloudflare Pages
 72be2ec  正式启用 cards.foxlaoy.com
+89f2f1e  交接报告与功能路线图
 ```
 
 ### 10.2 关键常量
