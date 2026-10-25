@@ -265,7 +265,14 @@ npx wrangler pages deploy /tmp/cardwrite-dist \
 - 部署后检查 `https://cardwrite.pages.dev/` 与 `https://cards.foxlaoy.com/`。
 - 自定义域名 `cards.foxlaoy.com` 已在 Pages 项目中绑定，证书由 Cloudflare 自动续。
 
-### 4.4 域名
+### 4.4 工具集入口 Worker（临时）
+
+- Worker：`apppages-link-fix`，入口 `workers/hub-link-fix/worker.js`（在 `apppages` 仓库）。
+- 路由：`apps.foxlaoy.com/*`（`zone 59a042…`），另有既有的 `catbreak/download`、`catbreak/stats.json` 路由。
+- 行为：拉取 `https://apppages.pages.dev` 同路径，HTML 中把 `https://cards.laoyuanyingshi.com` 替换为 `https://cards.foxlaoy.com`；非 HTML 原样流式返回。
+- 删除方式：Cloudflare Dashboard → Workers Routes 删掉 `apps.foxlaoy.com/*`，再删 Worker；或在 API 里删除对应 route id。
+
+### 4.5 域名
 
 详见 `docs/DOMAIN.md`。要点：
 
@@ -274,7 +281,7 @@ npx wrangler pages deploy /tmp/cardwrite-dist \
 - 旧 origin 的 localStorage 可能仍留有剧本数据，且劫持页面同源可读；建议在浏览器站点设置里直接清除该站点数据，不要为了导出再打开它。
 - 新域名与旧域名不同源，旧数据不会自动带过来；用 JSON 备份导入。
 
-### 4.5 发版 checklist
+### 4.6 发版 checklist
 
 - [ ] `sw.js` 的 `VERSION` 是否递增（改了 `assets/` 就必须改）
 - [ ] `index.html` 的 `APP_VERSION` / 页脚版本号
@@ -285,13 +292,13 @@ npx wrangler pages deploy /tmp/cardwrite-dist \
 - [ ] 线上验证 `cards.foxlaoy.com` 与 `cardwrite.pages.dev`
 - [ ] 如果改了数据结构，确认旧版 JSON 仍能导入
 
-### 4.6 回滚
+### 4.7 回滚
 
 - GitHub Pages：`git revert` 后推送，自动回滚。
 - Cloudflare Pages：Dashboard → Deployments → 选择上一个成功部署 → “Rollback”。
 - 数据：撤销栈仅当前会话；跨会话恢复靠 `scriptCards_<名称>` 快照或用户自己导出的 JSON。**没有自动历史版本**（这是路线图 Phase 1 的重点）。
 
-### 4.7 账号与权限现状
+### 4.8 账号与权限现状
 
 | 项 | 状态 |
 | --- | --- |
@@ -316,10 +323,11 @@ npx wrangler pages deploy /tmp/cardwrite-dist \
    - 原因：Cloudflare OAuth 过期，最后一次部署在 `72be2ec` 之前。
    - 修复：`wrangler login` → 按 4.3 重新部署。
 
-2. **`apps.foxlaoy.com` 工具集入口仍指向旧劫持域名**
-   - 现象：`apps.foxlaoy.com` 上“老袁编剧卡片系统”卡片链接还是 `cards.laoyuanyingshi.com`。
-   - 原因：该项目（Cloudflare Pages `apppages`）没有跟随 GitHub 推送构建；GitHub 镜像 `foxmuldery.github.io/apppages` 已更新。
-   - 修复：重新部署 `apppages` 的 Cloudflare Pages 项目，或在 Dashboard 里把项目接到 Git；只改 `index.html` 一行链接。
+2. **`apps.foxlaoy.com` 工具集入口（已用 Worker 兜底，根因未除）**
+   - 现象：该页“老袁编剧卡片系统”卡片原本仍链到 `cards.laoyuanyingshi.com`。
+   - 原因：Cloudflare Pages 项目 `apppages` 虽显示 GitHub 连接，但 push `main` / `gh-pages` 都没有触发构建；整站手动部署又被 6 个 32MB 的 macOS 安装包卡住（Pages 单文件 25MB 限制）。
+   - 现状：已部署最小 Worker `apppages-link-fix`，路由 `apps.foxlaoy.com/*`，从 `https://apppages.pages.dev` 取页面并把旧域名替换为新域名；其他路径按原样代理，`catbreak/stats.json` 等更具体的路由优先。
+   - 根因修复：在 Cloudflare Dashboard 重新连接 `apppages` 的 Git 构建，或把静态站拆成不含大安装包的部署；完成后可删除 Worker 路由（`workers/routes`）与 Worker。
 
 ### P1（稳定性/可维护性）
 

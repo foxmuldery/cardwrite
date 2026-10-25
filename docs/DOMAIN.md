@@ -69,6 +69,10 @@ dig +short cards.foxlaoy.com          # 104.21.9.160 / 172.67.160.71
 curl -sI https://cards.foxlaoy.com/   # 200
 ```
 
+### 工具集入口
+
+`apps.foxlaoy.com` 的「老袁编剧卡片系统」卡片已指向新域名。该 Pages 项目的 Git 构建未触发，整站手动部署又受 32MB 安装包拖累，因此用一个只做 HTML 域名替换的 Worker `apppages-link-fix`（路由 `apps.foxlaoy.com/*`）兜底；后续重新部署 `apppages` 后可删除该 Worker。
+
 ### 后续
 
 - 旧域名彻底收回后，可以把 `laoyuanyingshi.com` 全站 301 到新域名。
