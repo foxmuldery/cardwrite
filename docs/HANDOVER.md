@@ -1,10 +1,10 @@
 # 编剧卡片系统 · 交接报告
 
-- 版本：v1.0.0（schema 2，Service Worker `cardwrite-v1.0.1`）
+- 版本：v1.1.0（schema 3，Service Worker `cardwrite-v1.1.0`）
 - 代码：<https://github.com/foxmuldery/cardwrite>（public，`main`）
 - 线上：<https://cards.foxlaoy.com/>（Cloudflare Pages）
 - 交接日期：2026-10-24
-- 上一手：2026-10-22 完成 v1.0.0 重构与域名迁移
+- 上一手：2026-10-22 完成 v1.0.0 重构与域名迁移；2026-10-25 发布 v1.1.0（大纲视图 / 标签 / 版本历史 / CI 自检）
 
 ---
 
@@ -16,11 +16,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 代码 | v1.0.0，`main` 为唯一开发分支 |
+| 代码 | v1.1.0，`main` 为唯一开发分支 |
 | 主站 | `cards.foxlaoy.com` 已生效，HTTPS 正常 |
 | 源站 | Cloudflare Pages 项目 `cardwrite` |
 | 镜像 | GitHub Pages `foxmuldery.github.io/cardwrite` |
-| 自动化 | 无构建、无测试、无 CI；GitHub Pages 推送即发布，Cloudflare Pages 手动部署 |
+| 自动化 | 无构建；`scripts/check.mjs` 静态自检 + GitHub Actions；GitHub Pages 推送即发布，Cloudflare Pages 手动部署 |
 | 最大风险 | 数据只在单浏览器；Cloudflare 部署权限已过期；工具集入口仍指向旧劫持域名 |
 
 接手后最先做的三件事：
@@ -123,15 +123,16 @@ docs/                      域名记录、预览图、本文件、路线图
 
 > 维护提示：`app.js` 已经偏大。路线图 Phase 0 建议拆成 ES modules（`data/`、`ui/`、`export/`、`ai/`），但**不要**在拆分的同时改行为。
 
-### 3.3 数据模型（schema 2）
+### 3.3 数据模型（schema 3）
 
 ```json
 {
   "project": {
+    "id": "uuid",
     "title": "雨夜来信",
     "type": "tv-hour",
     "lastSaved": "2026-10-22T…",
-    "schema": 2
+    "schema": 3
   },
   "acts": {
     "1": { "opening": [Card], "theme": [Card], "…": [] },
@@ -156,7 +157,7 @@ docs/                      域名记录、预览图、本文件、路线图
   emotionalChangeContent: string;   // ≤80
   createdAt: string;                // ISO
   updatedAt: string;
-  tags: string[];                   // 预留，UI 暂未暴露
+  tags: string[];                   // 标签，最多 6 个
   origin?: { act: string; beat: string }; // 迁移时记录来源
 }
 ```
@@ -193,7 +194,9 @@ localStorage key：
 
 **拖拽**：SortableJS，`group: 'cards'`，跨节拍/跨幕；落点用 DOM 顺序回写（`syncFromDom`），避免索引错位；拖到页面底部“松手删除”区域用坐标命中检测，不依赖 Sortable 容器。
 
-**渲染**：整板重建（`renderBoard`），卡片节点用 `textContent`/转义构建，所有用户内容经 `escapeHtml`。当前规模（≤几百张）无需虚拟滚动。
+**渲染**：整板重建（`renderBoard`），卡片节点用 `textContent`/转义构建，所有用户内容经 `escapeHtml`。当前规模（≤几百张）无需虚拟滚动。大纲视图（`renderOutline`）与卡片板共享同一份数据，切换视图不重排数据。
+
+**版本历史**：IndexedDB `cardwrite-history` / `versions`，按 `project.id` 归档；结构性修改与保存最多 60 条，支持预览、恢复、删除、手动存版本。恢复前会先把当前内容存为「恢复前」版本。
 
 **PWA**：`sw.js` 预缓存 app shell；导航 network-first，静态资源 cache-first + 后台更新。**改完 `assets/` 必须改 `sw.js` 的 `VERSION`**，否则回访用户可能短时间看到旧资源。
 
@@ -393,6 +396,7 @@ curl --doh-url https://cloudflare-dns.com/dns-query -I https://cards.foxlaoy.com
 - [ ] 部署最新 `main` 到 Cloudflare Pages，修正 `canonical`
 - [ ] 更新 `apps.foxlaoy.com` 的卡片入口
 - [ ] 给仓库加 `CLOUDFLARE_API_TOKEN`（Pages:Edit）Secret，接 GitHub Actions
+- [x] 静态自检（`scripts/check.mjs` + GitHub Actions）
 - [ ] 补 Vitest + Playwright 最小测试集
 - [ ] 拆分 `app.js`（不改行为）
 - [ ] 给 `sw.js` 加版本校验脚本
@@ -439,8 +443,8 @@ f160e05  README 预览与部署状态
 | 常量 | 值 |
 | --- | --- |
 | `APP_VERSION` | `1.0.0` |
-| `SCHEMA` | `2` |
-| SW `VERSION` | `cardwrite-v1.0.1` |
+| `SCHEMA` | `3` |
+| SW `VERSION` | `cardwrite-v1.1.0` |
 | 撤销栈 | 40 |
 | 垃圾桶 | 120 条 / 30 天 |
 | 描述上限 | 1200 字 |

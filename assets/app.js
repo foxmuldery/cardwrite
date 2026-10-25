@@ -6,15 +6,17 @@
   'use strict';
 
   /* ======================= 常量与结构 ======================= */
-  const APP_VERSION = '1.0.0';
-  const SCHEMA = 2;
+  const APP_VERSION = '1.1.0';
+  const SCHEMA = 3;
   const K = {
     current: 'scriptCards',
     projectPrefix: 'scriptCards_',
     trash: 'cardwrite.trash',
     theme: 'cardwrite.theme',
-    seen: 'cardwrite.seen'
+    seen: 'cardwrite.seen',
+    view: 'cardwrite.view'
   };
+  const HISTORY = { db: 'cardwrite-history', store: 'versions', max: 60, throttle: 90000 };
   const TYPE_LABEL = { movie: '电影', 'tv-hour': '一小时剧集', 'tv-half': '半小时喜剧' };
   const STATUS_LABEL = { confirmed: '确认', pending: '保留', question: '存疑' };
   const EMOTION = {
@@ -148,6 +150,12 @@
     const pad = n => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
+  function formatTime(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
   function relativeTime(iso) {
     const diff = Date.now() - new Date(iso).getTime();
     if (!Number.isFinite(diff)) return '';
@@ -197,7 +205,11 @@
     dragging: false,
     dragSnapshot: null,
     lastDragEnd: 0,
-    pendingConfirm: null
+    pendingConfirm: null,
+    view: 'board',
+    collapsedActs: new Set(),
+    lastSnapshotAt: 0,
+    historyReady: false
   };
 
   const dom = {};
@@ -222,7 +234,7 @@
     });
     outActs.bucket = { ideas: [] };
     return {
-      project: { title: title || '未命名剧本', type: key, lastSaved: nowISO(), schema: SCHEMA },
+      project: { id: uid(), title: title || '未命名剧本', type: key, lastSaved: nowISO(), schema: SCHEMA },
       acts: outActs
     };
   }
@@ -267,6 +279,7 @@
     const proj = src.project && typeof src.project === 'object' ? src.project : {};
     const type = STRUCTURES[proj.type] ? proj.type : 'tv-hour';
     const data = blankData(type, clampText(proj.title, LIMITS.title) || '未命名剧本');
+    data.project.id = typeof proj.id === 'string' && proj.id ? proj.id : uid();
     data.project.lastSaved = typeof proj.lastSaved === 'string' ? proj.lastSaved : nowISO();
     const seen = new Set();
     const actsSrc = src.acts && typeof src.acts === 'object' ? src.acts : {};
@@ -346,6 +359,7 @@
     fn();
     state.data.project.lastSaved = nowISO();
     saveNow();
+    queueSnapshot(options.reason || '编辑', options.forceSnapshot);
     renderBoard();
     updateChrome();
   }
@@ -371,6 +385,115 @@
     updateChrome();
     if (dom.ideasDialog && dom.ideasDialog.open) renderIdeas();
     if (dom.trashDialog && dom.trashDialog.open) renderTrash();
+  }
+
+  /* ======================= 版本历史（IndexedDB） ======================= */
+  let historyDBPromise = null;
+
+  function historyAvailable() {
+    return typeof indexedDB !== 'undefined';
+  }
+
+  function openHistoryDB() {
+    if (!historyAvailable()) return Promise.reject(new Error('IndexedDB 不可用'));
+    if (!historyDBPromise) {
+      historyDBPromise = new Promise((resolve, reject) => {
+        let req;
+        try { req = indexedDB.open(HISTORY.db, 1); }
+        catch (err) { reject(err); return; }
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(HISTORY.store)) {
+            const store = db.createObjectStore(HISTORY.store, { keyPath: 'id' });
+            store.createIndex('projectId', 'projectId', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error('IndexedDB 打开失败'));
+      });
+    }
+    return historyDBPromise;
+  }
+
+  async function historyAdd(record) {
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY.store, 'readwrite');
+      tx.objectStore(HISTORY.store).put(record);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    await historyPrune(record.projectId);
+  }
+
+  async function historyAll(projectId) {
+    const db = await openHistoryDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY.store, 'readonly');
+      const req = tx.objectStore(HISTORY.store).index('projectId').getAll(projectId);
+      req.onsuccess = () => resolve((req.result || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function historyDelete(id) {
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY.store, 'readwrite');
+      tx.objectStore(HISTORY.store).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function historyClear(projectId) {
+    const items = await historyAll(projectId);
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY.store, 'readwrite');
+      const store = tx.objectStore(HISTORY.store);
+      items.forEach(item => store.delete(item.id));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function historyPrune(projectId) {
+    const items = await historyAll(projectId);
+    if (items.length <= HISTORY.max) return;
+    const extra = items.slice(HISTORY.max);
+    const db = await openHistoryDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(HISTORY.store, 'readwrite');
+      const store = tx.objectStore(HISTORY.store);
+      extra.forEach(item => store.delete(item.id));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function queueSnapshot(reason, force) {
+    if (!historyAvailable() || !state.data) return Promise.resolve(false);
+    const now = Date.now();
+    if (!force && now - state.lastSnapshotAt < HISTORY.throttle) return Promise.resolve(false);
+    state.lastSnapshotAt = now;
+    const record = {
+      id: uid(),
+      projectId: state.data.project.id,
+      createdAt: nowISO(),
+      reason: reason || '编辑',
+      cardCount: countStoryCards(),
+      data: JSON.stringify(state.data)
+    };
+    return historyAdd(record)
+      .then(() => {
+        if (dom.historyDialog && dom.historyDialog.open) renderHistory();
+        return true;
+      })
+      .catch(err => {
+        console.warn('版本历史写入失败', err);
+        return false;
+      });
   }
 
   /* 读取 / 写入卡片 */
@@ -498,7 +621,100 @@
     dom.board.appendChild(frag);
     updateCounts();
     applyFilter();
+    if (state.view === 'outline') renderOutline();
     initSortables();
+  }
+
+  /* ======================= 渲染：大纲 ======================= */
+  function outlineCardEl(card, actId, beatId) {
+    const locText = card.location.place ? card.location.type + '. ' + card.location.place : '未标场景';
+    const tags = (card.tags || []).slice(0, 4).map(t => '<span class="tag tag--label">' + escapeHtml(t) + '</span>').join('');
+    const conflict = [card.conflict.protagonist, card.conflict.goal].filter(Boolean).join(' → ');
+    const conflictTag = conflict ? '<span class="tag tag--conflict" title="' + escapeHtml(conflict) + '">' + escapeHtml(conflict) + '</span>' : '';
+    const meta = (tags || conflictTag) ? '<div class="outline-card__meta">' + conflictTag + tags + '</div>' : '';
+
+    const el = document.createElement('li');
+    el.className = 'outline-card';
+    el.dataset.id = card.id;
+    el.dataset.status = card.status;
+    el.dataset.act = actId;
+    el.dataset.beat = beatId;
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', STATUS_LABEL[card.status] + '卡片，' + locText + '：' + (card.description || '空'));
+    el.innerHTML =
+      '<span class="outline-card__dot" aria-hidden="true"></span>' +
+      '<span class="outline-card__scene">' + escapeHtml(locText) + '</span>' +
+      '<div class="outline-card__body">' +
+        '<p>' + (card.description ? escapeHtml(card.description) : '<span class="card__empty">（还没有写内容）</span>') + '</p>' +
+        meta +
+      '</div>' +
+      '<span class="outline-card__status">' + escapeHtml(STATUS_LABEL[card.status]) + '</span>';
+    return el;
+  }
+
+  function renderOutline() {
+    if (!dom.outline) return;
+    const frag = document.createDocumentFragment();
+    acts().forEach(act => {
+      const section = document.createElement('section');
+      section.className = 'outline-act' + (state.collapsedActs.has(act.id) ? ' is-collapsed' : '');
+      section.dataset.act = act.id;
+      const actCount = act.beats.reduce((n, b) => n + (state.data.acts[act.id] && state.data.acts[act.id][b.id] || []).length, 0);
+      section.innerHTML =
+        '<button type="button" class="outline-act__head" aria-expanded="' + (!state.collapsedActs.has(act.id)) + '" data-act="' + act.id + '">' +
+          '<span class="outline-act__title">' + escapeHtml(act.title) + '</span>' +
+          '<b>' + actCount + ' 张</b>' +
+          '<svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg>' +
+        '</button>' +
+        '<div class="outline-act__body"></div>';
+
+      const body = section.querySelector('.outline-act__body');
+      act.beats.forEach((beat, i) => {
+        const cards = cardsAt(act.id, beat.id);
+        const beatEl = document.createElement('div');
+        beatEl.className = 'outline-beat' + (cards.length ? '' : ' is-empty');
+        beatEl.dataset.act = act.id;
+        beatEl.dataset.beat = beat.id;
+        beatEl.innerHTML =
+          '<div class="outline-beat__head">' +
+            '<span class="outline-beat__num">' + String(i + 1).padStart(2, '0') + '</span>' +
+            '<span class="outline-beat__title">' + escapeHtml(beat.title) + '</span>' +
+            '<span class="outline-beat__count">' + (cards.length ? cards.length + ' 张' : '空') + '</span>' +
+            '<button type="button" class="outline-beat__add" data-act="' + act.id + '" data-beat="' + beat.id + '" aria-label="在' + escapeHtml(beat.title) + '添加卡片">' +
+              '<svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加' +
+            '</button>' +
+          '</div>' +
+          '<ol class="outline-cards"></ol>';
+        const list = beatEl.querySelector('.outline-cards');
+        cards.forEach(card => list.appendChild(outlineCardEl(card, act.id, beat.id)));
+        body.appendChild(beatEl);
+      });
+      frag.appendChild(section);
+    });
+    dom.outline.innerHTML = '';
+    dom.outline.appendChild(frag);
+    applyOutlineFilter();
+  }
+
+  function setView(view, persist) {
+    state.view = view === 'outline' ? 'outline' : 'board';
+    if (persist !== false) {
+      try { localStorage.setItem(K.view, state.view); } catch (e) { /* noop */ }
+    }
+    if (dom.board) dom.board.hidden = state.view !== 'board';
+    if (dom.outline) dom.outline.hidden = state.view !== 'outline';
+    $$('#view-switch button').forEach(btn => {
+      const active = btn.dataset.view === state.view;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (state.view === 'outline') {
+      renderOutline();
+      applyFilter();
+    } else {
+      applyFilter();
+    }
   }
 
   function cardEl(card, actId, beatId) {
@@ -515,6 +731,9 @@
     }
     if (conflictText) {
       meta += '<span class="tag tag--conflict" title="' + escapeHtml(conflictText) + '">' + escapeHtml(conflictText) + '</span>';
+    }
+    if (card.tags && card.tags.length) {
+      meta += card.tags.slice(0, 4).map(t => '<span class="tag tag--label">' + escapeHtml(t) + '</span>').join('');
     }
 
     const el = document.createElement('article');
@@ -590,7 +809,8 @@
       card.conflict.protagonist,
       card.conflict.goal,
       card.conflict.obstacle,
-      card.emotionalChangeContent
+      card.emotionalChangeContent,
+      (card.tags || []).join(' ')
     ].join('\n').toLowerCase();
     return hay.indexOf(q) !== -1;
   }
@@ -628,6 +848,30 @@
     } else {
       dom.resultCount.textContent = '';
     }
+    applyOutlineFilter();
+  }
+
+  function applyOutlineFilter() {
+    if (!dom.outline) return;
+    const q = state.filter.q.trim().toLowerCase();
+    const filtering = Boolean(q) || state.filter.status !== 'all';
+    $$('.outline-act', dom.outline).forEach(section => {
+      const actId = section.dataset.act;
+      const actAllowed = state.filter.act === 'all' || actId === state.filter.act;
+      let actVisible = 0;
+      $$('.outline-beat', section).forEach(beatEl => {
+        let beatVisible = 0;
+        $$('.outline-card', beatEl).forEach(el => {
+          const loc = findLocation(el.dataset.id);
+          const ok = loc ? cardMatches(loc.card, q) : true;
+          el.classList.toggle('is-hidden', filtering && !ok);
+          if (!filtering || ok) beatVisible++;
+        });
+        beatEl.classList.toggle('is-dim', filtering && beatVisible === 0);
+        actVisible += beatVisible;
+      });
+      section.classList.toggle('is-hidden', !actAllowed || (filtering && actVisible === 0));
+    });
   }
 
   function resetFilters() {
@@ -699,6 +943,7 @@
               state.dragSnapshot = null;
               trashCard(dropId);
               saveNow();
+              queueSnapshot('删除卡片', true);
               setTimeout(() => { renderBoard(); updateChrome(); }, 20);
               toast('卡片已移入垃圾桶', { action: { label: '撤销', onClick: undo }, duration: 5000 });
             }
@@ -723,6 +968,7 @@
           pushHistory(state.dragSnapshot);
           state.dragSnapshot = null;
           saveNow();
+          queueSnapshot('移动卡片', true);
           renderBoard();
           updateChrome();
           if (from.act !== to.act || from.beat !== to.beat) {
@@ -826,6 +1072,22 @@
     return active ? active.dataset[attr] : fallback;
   }
 
+  function parseTags(value) {
+    const seen = new Set();
+    return String(value || '')
+      .split(/[,，、\s]+/)
+      .map(t => t.trim().replace(/^#/, ''))
+      .filter(t => {
+        if (!t) return false;
+        const key = t.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map(t => t.slice(0, 16))
+      .slice(0, 6);
+  }
+
   function openEditor(opts) {
     const options = opts || {};
     closePopover();
@@ -880,6 +1142,7 @@
     dom.conflictGoal.value = conf.goal || '';
     dom.conflictBlock.value = conf.obstacle || '';
     dom.emotionNote.value = c.emotionalChangeContent || '';
+    dom.cardTags.value = (c.tags || []).join(', ');
     setSegmented(dom.cardStatus, 'status', c.status || 'confirmed');
     setSegmented(dom.emotionType, 'value', c.emotionalChange || 'positive');
     autoGrow(dom.cardDesc);
@@ -897,7 +1160,8 @@
       goal: dom.conflictGoal.value.trim(),
       obstacle: dom.conflictBlock.value.trim(),
       emotion: getSegmented(dom.emotionType, 'value', 'positive'),
-      emotionNote: dom.emotionNote.value.trim()
+      emotionNote: dom.emotionNote.value.trim(),
+      tags: parseTags(dom.cardTags.value)
     };
   }
 
@@ -943,6 +1207,7 @@
         conflict: { protagonist: v.who, goal: v.goal, obstacle: v.obstacle },
         emotionalChange: v.emotion,
         emotionalChangeContent: v.emotionNote,
+        tags: v.tags,
         createdAt: old ? old.card.createdAt : ts,
         updatedAt: ts
       };
@@ -964,7 +1229,7 @@
         else list.push(card);
         toast('已保存');
       }
-    });
+    }, { reason: isNew ? '新增卡片' : '编辑卡片', forceSnapshot: true });
 
     const cameFromIdea = Boolean(state.editor && state.editor.ideaId);
     closeEditor();
@@ -985,7 +1250,7 @@
       danger: true
     }).then(ok => {
       if (!ok) return;
-      mutate(() => { trashCard(id); });
+      mutate(() => { trashCard(id); }, { reason: '删除卡片', forceSnapshot: true });
       closeEditor();
       toast('已移入垃圾桶', { action: { label: '撤销', onClick: undo }, duration: 5000 });
     });
@@ -1005,10 +1270,11 @@
         conflict: { protagonist: v.who, goal: v.goal, obstacle: v.obstacle },
         emotionalChange: v.emotion,
         emotionalChangeContent: v.emotionNote,
+        tags: v.tags,
         createdAt: ts,
         updatedAt: ts
       }, v.act, v.beat);
-    });
+    }, { reason: '复制卡片', forceSnapshot: true });
     closeEditor();
     toast('已复制一张卡片');
   }
@@ -1068,7 +1334,7 @@
         createdAt: ts,
         updatedAt: ts
       }, state.quick.act, state.quick.beat);
-    });
+    }, { reason: '快速添加', forceSnapshot: true });
     if (keepOpen) {
       dom.quickDesc.value = '';
       dom.quickDesc.focus();
@@ -1175,7 +1441,7 @@
       danger: true
     }).then(ok => {
       if (!ok) return;
-      mutate(() => { trashCard(id); });
+      mutate(() => { trashCard(id); }, { reason: '删除卡片', forceSnapshot: true });
       toast('已移入垃圾桶', { action: { label: '撤销', onClick: undo }, duration: 5000 });
     });
   }
@@ -1321,6 +1587,11 @@
     renderBoard();
     updateChrome();
     renderProjects();
+    if (historyAvailable()) {
+      historyAll(state.data.project.id)
+        .then(list => { if (!list.length) queueSnapshot('初始版本', true); })
+        .catch(() => {});
+    }
     closeDialog(dom.projectsDialog);
     toast('已打开「' + state.data.project.title + '」');
   }
@@ -1402,6 +1673,7 @@
       state.history.length = 0;
       state.future.length = 0;
       saveNow();
+      queueSnapshot('新建项目', true);
       resetFilters();
       renderBoard();
       updateChrome();
@@ -1423,6 +1695,7 @@
       if (!ok) { dom.typeSelect.value = state.data.project.type; return; }
       const old = state.data;
       const next = blankData(nextType, old.project.title);
+      next.project.id = old.project.id;
       next.project.lastSaved = old.project.lastSaved;
       const beatOnlyIndex = new Map();
       STRUCTURES[nextType].acts.forEach(a => a.beats.forEach(b => {
@@ -1448,6 +1721,7 @@
       state.data = next;
       state.data.project.type = nextType;
       saveNow();
+      queueSnapshot('切换结构', true);
       renderBoard();
       updateChrome();
       const moved = ideaCards().length - ideasBefore;
@@ -1515,7 +1789,7 @@
       danger: true
     }).then(ok => {
       if (!ok) return;
-      mutate(() => { trashCard(id); });
+      mutate(() => { trashCard(id); }, { reason: '删除灵感', forceSnapshot: true });
       renderIdeas();
       toast('已移入垃圾桶', { action: { label: '撤销', onClick: undo }, duration: 5000 });
     });
@@ -1557,7 +1831,7 @@
       } else {
         insertCard(card, item.act, item.beat);
       }
-    });
+    }, { reason: '恢复卡片', forceSnapshot: true });
     renderTrash();
     toast('卡片已恢复');
   }
@@ -1570,6 +1844,127 @@
     renderTrash();
     updateChrome();
     toast('已彻底删除');
+  }
+
+  /* ======================= 版本历史 UI ======================= */
+  function historySummary(record) {
+    try {
+      const data = JSON.parse(record.data);
+      const lines = [];
+      const struct = STRUCTURES[data.project && data.project.type] || STRUCTURES['tv-hour'];
+      struct.acts.forEach(act => {
+        const count = act.beats.reduce((n, b) => n + (data.acts[act.id] && data.acts[act.id][b.id] || []).length, 0);
+        if (!count) return;
+        lines.push(act.title + ' · ' + count + ' 张');
+        act.beats.forEach(beat => {
+          const list = data.acts[act.id] && data.acts[act.id][beat.id] || [];
+          list.slice(0, 4).forEach(card => {
+            const scene = card.location && card.location.place ? card.location.type + '. ' + card.location.place : '未标场景';
+            lines.push('  ' + beat.title + '｜' + scene + '｜' + (card.description || '').slice(0, 40));
+          });
+        });
+      });
+      return lines.join('\n') || '（空项目）';
+    } catch (e) {
+      return '版本数据读取失败';
+    }
+  }
+
+  async function renderHistory() {
+    if (!dom.historyDialog || !dom.historyDialog.open) return;
+    dom.historyList.innerHTML = '<p class="history-empty">读取中…</p>';
+    try {
+      const items = await historyAll(state.data.project.id);
+      if (!dom.historyDialog.open) return;
+      if (!items.length) {
+        dom.historyList.innerHTML = '<p class="history-empty">还没有历史版本。修改卡片后会自动留档。</p>';
+        return;
+      }
+      dom.historyList.innerHTML = '';
+      items.forEach(record => {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        row.dataset.id = record.id;
+        const size = Math.max(1, Math.round((record.data || '').length / 1024));
+        row.innerHTML =
+          '<div class="history-item__head">' +
+            '<span class="history-item__time">' + escapeHtml(formatTime(record.createdAt)) + '</span>' +
+            '<span class="history-item__reason">' + escapeHtml(record.reason || '编辑') + '</span>' +
+            '<span class="history-item__meta">' + (record.cardCount || 0) + ' 张 · ' + size + ' KB</span>' +
+            '<div class="history-item__actions">' +
+              '<button type="button" class="btn btn--ghost" data-haction="preview">预览</button>' +
+              '<button type="button" class="btn btn--ghost" data-haction="restore">恢复</button>' +
+              '<button type="button" class="btn btn--danger-ghost" data-haction="delete">删除</button>' +
+            '</div>' +
+          '</div>';
+        dom.historyList.appendChild(row);
+      });
+    } catch (err) {
+      dom.historyList.innerHTML = '<p class="history-empty">历史版本读取失败：浏览器可能禁用了 IndexedDB。</p>';
+      console.warn(err);
+    }
+  }
+
+  function openHistory() {
+    if (!historyAvailable()) {
+      toast('当前浏览器不支持版本历史（IndexedDB 不可用）', 'error');
+      return;
+    }
+    openDialog(dom.historyDialog);
+    renderHistory();
+  }
+
+  function toggleHistoryPreview(row, record) {
+    const existing = row.querySelector('.history-preview');
+    if (existing) { existing.remove(); return; }
+    const pre = document.createElement('div');
+    pre.className = 'history-preview';
+    pre.textContent = historySummary(record);
+    row.appendChild(pre);
+  }
+
+  function restoreVersion(record) {
+    confirmAction({
+      title: '恢复到这个版本？',
+      body: formatTime(record.createdAt) + ' · ' + (record.cardCount || 0) + ' 张卡片。当前内容会先自动存为一个版本。',
+      okText: '恢复'
+    }).then(ok => {
+      if (!ok) return;
+      queueSnapshot('恢复前', true);
+      try {
+        state.data = normalizeData(JSON.parse(record.data));
+      } catch (e) {
+        toast('版本数据损坏，无法恢复', 'error');
+        return;
+      }
+      state.filter.q = '';
+      dom.search.value = '';
+      dom.searchClear.hidden = true;
+      state.lastSnapshotAt = 0;
+      saveNow();
+      renderBoard();
+      updateChrome();
+      renderHistory();
+      toast('已恢复到 ' + formatTime(record.createdAt));
+    });
+  }
+
+  async function handleHistoryAction(action, id) {
+    const items = await historyAll(state.data.project.id);
+    const record = items.find(x => x.id === id);
+    if (!record) return;
+    if (action === 'restore') restoreVersion(record);
+    else if (action === 'delete') {
+      confirmAction({
+        title: '删除这个历史版本？',
+        body: formatDate(record.createdAt) + ' 的版本将被删除，不影响当前项目。',
+        okText: '删除',
+        danger: true
+      }).then(ok => {
+        if (!ok) return;
+        historyDelete(id).then(() => { renderHistory(); toast('版本已删除'); });
+      });
+    }
   }
 
   /* ======================= 结构诊断 ======================= */
@@ -1742,6 +2137,7 @@
           const conflict = [card.conflict.protagonist && '主人公：' + card.conflict.protagonist, card.conflict.goal && '目标：' + card.conflict.goal, card.conflict.obstacle && '障碍：' + card.conflict.obstacle].filter(Boolean);
           if (conflict.length) lines.push('  - 冲突 · ' + conflict.join('；'));
           if (card.emotionalChangeContent) lines.push('  - 情感 · ' + (EMOTION[card.emotionalChange] || EMOTION.neutral).label + '：' + card.emotionalChangeContent);
+          if (card.tags && card.tags.length) lines.push('  - 标签 · ' + card.tags.join('、'));
         });
         lines.push('');
       });
@@ -1766,7 +2162,7 @@
   }
 
   function exportCSV() {
-    const rows = [['幕', '节拍', '状态', '场景类型', '场景', '剧情内容', '主人公', '目标', '障碍', '情感', '情感说明', '创建时间']];
+    const rows = [['幕', '节拍', '状态', '场景类型', '场景', '剧情内容', '主人公', '目标', '障碍', '情感', '情感说明', '标签', '创建时间']];
     storyCards().forEach(({ card, act, beat }) => {
       const meta = beatMeta(act, beat);
       const actTitle = (acts().find(a => a.id === act) || {}).title || act;
@@ -1782,6 +2178,7 @@
         card.conflict.obstacle,
         (EMOTION[card.emotionalChange] || EMOTION.neutral).label,
         card.emotionalChangeContent,
+        (card.tags || []).join(' / '),
         card.createdAt
       ]);
     });
@@ -1840,6 +2237,7 @@
         state.history.length = 0;
         state.future.length = 0;
         saveNow();
+        queueSnapshot('导入项目', true);
         resetFilters();
         renderBoard();
         updateChrome();
@@ -1938,7 +2336,11 @@
       titleInput: '#project-title', saveState: '#save-state', typeSelect: '#script-type',
       btnNew: '#btn-new', btnOpen: '#btn-open', btnImport: '#btn-import', btnStats: '#btn-stats',
       btnHelp: '#btn-help', themeBtn: '#btn-theme', exportMenu: '#export-menu', btnAdd: '#btn-add',
-      btnMore: '#btn-more', moreMenu: '#more-menu',
+      btnMore: '#btn-more', moreMenu: '#more-menu', btnHistory: '#btn-history',
+      outline: '#outline', viewSwitch: '#view-switch',
+      historyDialog: '#dlg-history', historyList: '#history-list',
+      btnSnapshotNow: '#btn-snapshot-now', btnClearHistory: '#btn-clear-history',
+      cardTags: '#card-tags',
       btnIdeas: '#btn-ideas', btnTrash: '#btn-trash', ideasCount: '#ideas-count',
       trashCount: '#trash-count', trashDrop: '#trash-drop', fab: '#fab', toasts: '#toasts',
       fileInput: '#file-input', versionLabel: '#version-label',
@@ -1991,6 +2393,7 @@
       if (action === 'new') newProject();
       else if (action === 'import') dom.fileInput.click();
       else if (action === 'stats') openStats();
+      else if (action === 'history') openHistory();
       else if (action === 'help') openDialog(dom.helpDialog);
     });
     document.addEventListener('click', e => {
@@ -2012,6 +2415,78 @@
     dom.btnHelp.addEventListener('click', () => openDialog(dom.helpDialog));
     dom.themeBtn.addEventListener('click', toggleTheme);
     dom.typeSelect.addEventListener('change', () => changeType(dom.typeSelect.value));
+    dom.btnHistory.addEventListener('click', openHistory);
+
+    dom.viewSwitch.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-view]');
+      if (!btn) return;
+      setView(btn.dataset.view);
+    });
+
+    dom.outline.addEventListener('click', e => {
+      const head = e.target.closest('.outline-act__head');
+      if (head) {
+        const actId = head.dataset.act;
+        if (state.collapsedActs.has(actId)) state.collapsedActs.delete(actId);
+        else state.collapsedActs.add(actId);
+        const section = head.closest('.outline-act');
+        section.classList.toggle('is-collapsed', state.collapsedActs.has(actId));
+        head.setAttribute('aria-expanded', state.collapsedActs.has(actId) ? 'false' : 'true');
+        return;
+      }
+      const add = e.target.closest('.outline-beat__add');
+      if (add) {
+        openEditor({ act: add.dataset.act, beat: add.dataset.beat });
+        return;
+      }
+      const card = e.target.closest('.outline-card');
+      if (card) openEditor({ id: card.dataset.id });
+    });
+    dom.outline.addEventListener('keydown', e => {
+      const card = e.target.closest('.outline-card');
+      if (!card) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openEditor({ id: card.dataset.id });
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        deleteCardWithConfirm(card.dataset.id);
+      }
+    });
+
+    dom.historyList.addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-haction]');
+      if (!btn) return;
+      const row = btn.closest('.history-item');
+      const id = row.dataset.id;
+      const action = btn.dataset.haction;
+      if (action === 'preview') {
+        try {
+          const items = await historyAll(state.data.project.id);
+          const record = items.find(x => x.id === id);
+          if (record) toggleHistoryPreview(row, record);
+        } catch (err) { toast('预览失败', 'error'); }
+        return;
+      }
+      handleHistoryAction(action, id);
+    });
+    dom.btnSnapshotNow.addEventListener('click', () => {
+      queueSnapshot('手动保存', true).then(ok => {
+        toast(ok ? '已保存当前版本' : '版本保存失败', ok ? 'info' : 'error');
+        renderHistory();
+      });
+    });
+    dom.btnClearHistory.addEventListener('click', () => {
+      confirmAction({
+        title: '清空版本历史？',
+        body: '只会删除历史版本，不影响当前项目。此操作不可恢复。',
+        okText: '清空',
+        danger: true
+      }).then(ok => {
+        if (!ok) return;
+        historyClear(state.data.project.id).then(() => { renderHistory(); toast('历史已清空'); });
+      });
+    });
 
     dom.exportMenu.addEventListener('click', e => {
       const btn = e.target.closest('button[data-export]');
@@ -2282,9 +2757,14 @@
       } catch (e) { /* noop */ }
     }
     loadTrash();
+    try {
+      const savedView = localStorage.getItem(K.view);
+      state.view = savedView === 'outline' ? 'outline' : 'board';
+    } catch (e) { state.view = 'board'; }
     bindEvents();
     renderBoard();
     updateChrome();
+    setView(state.view, false);
     updateThemeButton();
     syncThemeColor();
     dom.versionLabel.textContent = 'v' + APP_VERSION;
@@ -2294,6 +2774,16 @@
     if (!localStorage.getItem(K.seen)) {
       try { localStorage.setItem(K.seen, '1'); } catch (e) { /* noop */ }
       setTimeout(() => toast('数据只存在本机，记得定期导出备份。', { duration: 5200 }), 900);
+    }
+
+    // 首次打开时留一个初始版本；之后由 mutate 自动留档
+    if (historyAvailable()) {
+      historyAll(state.data.project.id)
+        .then(list => {
+          if (list.length) return;
+          return queueSnapshot('初始版本', true).then(() => { state.lastSnapshotAt = 0; });
+        })
+        .catch(() => { /* IndexedDB 不可用时静默 */ });
     }
 
     // 定期把 pending 的保存落盘

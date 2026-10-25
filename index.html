@@ -54,6 +54,8 @@
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
     <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5m-5 4h5"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><path d="M12 8v4l3 2"/></symbol>
     <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></symbol>
   </defs>
 </svg>
@@ -105,6 +107,9 @@
       <button class="btn btn--ghost" id="btn-stats" type="button" title="结构诊断">
         <svg class="icon"><use href="#i-chart"/></svg><span class="btn__label">诊断</span>
       </button>
+      <button class="btn btn--icon" id="btn-history" type="button" title="版本历史" aria-label="版本历史">
+        <svg class="icon"><use href="#i-history"/></svg>
+      </button>
       <button class="btn btn--icon" id="btn-help" type="button" title="帮助与快捷键" aria-label="帮助与快捷键">
         <svg class="icon"><use href="#i-help"/></svg>
       </button>
@@ -120,6 +125,7 @@
       <button type="button" role="menuitem" data-more="new"><svg class="icon"><use href="#i-plus"/></svg>新建项目</button>
       <button type="button" role="menuitem" data-more="import"><svg class="icon"><use href="#i-import"/></svg>导入 JSON</button>
       <button type="button" role="menuitem" data-more="stats"><svg class="icon"><use href="#i-chart"/></svg>结构诊断</button>
+      <button type="button" role="menuitem" data-more="history"><svg class="icon"><use href="#i-history"/></svg>版本历史</button>
       <button type="button" role="menuitem" data-more="help"><svg class="icon"><use href="#i-help"/></svg>帮助与快捷键</button>
     </div>
   </div>
@@ -134,6 +140,10 @@
       <option value="tv-half">半小时喜剧</option>
     </select>
   </label>
+  <div class="segmented view-switch" id="view-switch" role="group" aria-label="切换视图">
+    <button type="button" data-view="board" class="is-active" aria-pressed="true">卡片板</button>
+    <button type="button" data-view="outline" aria-pressed="false">大纲</button>
+  </div>
   <div class="toolbar__acts" id="act-tabs" role="tablist" aria-label="按幕筛选"></div>
   <div class="toolbar__filters">
     <div class="segmented" id="status-filter" role="group" aria-label="按卡片标记筛选">
@@ -157,6 +167,7 @@
 
 <div class="print-head" id="print-head" aria-hidden="true"></div>
 <main class="board" id="board" aria-label="故事结构卡片板"></main>
+<div class="outline" id="outline" aria-label="故事大纲" hidden></div>
 
 <div class="fab" id="fab">
   <button class="fab__side" id="btn-ideas" type="button" title="灵感箱">
@@ -256,6 +267,10 @@
           </label>
         </div>
       </fieldset>
+      <label class="field">
+        <span>标签 <em>逗号或空格分隔，最多 6 个</em></span>
+        <input id="card-tags" type="text" maxlength="80" placeholder="例：雨夜, 信, 反转" autocomplete="off">
+      </label>
       <p class="dialog__note" id="editor-idea-note" hidden>这是一条灵感，保存后会从灵感箱移到所选节拍。</p>
     </div>
     <footer class="dialog__foot">
@@ -401,6 +416,8 @@
         <li>在顶部选剧本类型：电影、一小时剧集或半小时喜剧。</li>
         <li>点右下角「新增卡片」，或双击任意节拍空白处，写下这一拍发生了什么。</li>
         <li>拖拽卡片调整顺序和归属；点「诊断」看节奏、关键节拍和情感曲线。</li>
+        <li>顶部可切换「卡片板 / 大纲」；大纲适合通读和改字，卡片板适合拖拽和总览。</li>
+        <li>「版本历史」每隔一段时间自动留档，误删或改坏可以恢复；也可以手动保存版本。</li>
       </ol>
     </section>
     <section class="help-section">
@@ -428,6 +445,28 @@
   <footer class="dialog__foot">
     <span class="spacer"></span>
     <button type="button" class="btn btn--ghost" data-close>知道了</button>
+  </footer>
+</dialog>
+
+<!-- ============ 版本历史 ============ -->
+<dialog class="dialog dialog--history" id="dlg-history" aria-labelledby="history-title">
+  <header class="dialog__head">
+    <h2 id="history-title">版本历史</h2>
+    <button type="button" class="btn btn--icon" data-close aria-label="关闭">
+      <svg class="icon"><use href="#i-close"/></svg>
+    </button>
+  </header>
+  <div class="dialog__body">
+    <p class="dialog__note">每次结构性修改会自动留一个版本（最多 60 个）。版本只存在这台设备的浏览器里，换设备请用 JSON 备份。</p>
+    <div id="history-list" class="history-list"></div>
+  </div>
+  <footer class="dialog__foot">
+    <button type="button" class="btn btn--ghost" id="btn-snapshot-now">
+      <svg class="icon"><use href="#i-plus"/></svg><span>保存当前版本</span>
+    </button>
+    <button type="button" class="btn btn--danger-ghost" id="btn-clear-history">清空历史</button>
+    <span class="spacer"></span>
+    <button type="button" class="btn btn--ghost" data-close>关闭</button>
   </footer>
 </dialog>
 

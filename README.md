@@ -30,6 +30,7 @@
 
 **结构**
 - 三种剧本结构：电影（三幕 15 拍）、一小时剧集（四幕 15 拍）、半小时喜剧（三幕 15 拍）。
+- 卡片板 / 大纲双视图：卡片板拖拽总览，大纲通读和改字；视图与折叠状态会记住。
 - 每个节拍带推荐卡片数量与写作提示，超出建议数量会标黄。
 - 切换剧本类型不再清空数据：能对上的卡片留在原位，对不上的移入灵感箱。
 
@@ -38,7 +39,9 @@
 - 三种标记：确认、保留、存疑；卡片左侧色条即时区分。
 - 拖拽跨节拍、跨幕排序；手机上长按拖动，拖到屏幕下方垃圾桶删除。
 - 卡片菜单：编辑、复制、更改位置、删除。
+- 标签：逗号或空格分隔，最多 6 个；卡片、大纲、搜索、CSV/Markdown 导出都会带上。
 - 删除进垃圾桶，保留 30 天，可随时恢复，也可撤销。
+- 版本历史：结构性修改与保存自动留档（最多 60 个），支持预览、恢复、删除、手动存版本；存在 IndexedDB。
 
 **写作辅助**
 - 灵感箱：还没想好放哪里的点子先存起来，之后一键转成卡片。
@@ -111,6 +114,8 @@ assets/vendor/sortable.min.js  SortableJS 1.15.0（MIT，已内置）
 assets/icons/              应用图标与 favicon
 manifest.webmanifest       PWA 清单
 sw.js                      离线缓存
+scripts/check.mjs          无依赖静态自检（CI 用）
+.github/workflows/ci.yml   push / PR 跑自检
 404.html                   404 回退页
 docs/DOMAIN.md             域名被劫持的取证与修复步骤
 ```
@@ -119,17 +124,18 @@ docs/DOMAIN.md             域名被劫持的取证与修复步骤
 
 ```json
 {
-  "project": { "title": "剧本名", "type": "movie", "lastSaved": "2026-10-22T…", "schema": 2 },
+  "project": { "id": "uuid", "title": "剧本名", "type": "movie", "lastSaved": "2026-10-22T…", "schema": 3 },
   "acts": {
     "1": { "opening": [ { "id": "…", "status": "confirmed", "location": { "type": "INT", "place": "…" },
                           "description": "…", "conflict": { "protagonist": "…", "goal": "…", "obstacle": "…" },
-                          "emotionalChange": "positive", "emotionalChangeContent": "…" } ] },
+                          "emotionalChange": "positive", "emotionalChangeContent": "…",
+                          "tags": ["雨夜", "信"] } ] },
     "bucket": { "ideas": [] }
   }
 }
 ```
 
-`type` 取值：`movie` / `tv-hour` / `tv-half`。导入时会校验结构、补齐缺省字段，并把无法归位的卡片放进灵感箱，不会静默丢弃。
+`type` 取值：`movie` / `tv-hour` / `tv-half`。导入时会校验结构、补齐缺省字段（含 `project.id`），并把无法归位的卡片放进灵感箱，不会静默丢弃。旧版 v0.8.x / schema 2 的文件可直接导入。
 
 ## 交接与规划
 
